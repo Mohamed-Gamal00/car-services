@@ -1,0 +1,83 @@
+[33m4ef45a8c[m[33m ([m[1;36mHEAD -> [m[1;32mtesting[m[33m, [m[1;31morigin/testing[m[33m)[m Merge pull request #5 from mostafatahaa/mainChanges
+[33m728e52c0[m before checkout the testing branch
+[33m4d9ae1aa[m cart js edit
+[33m04766983[m Merge branch 'master' into mainChanges
+[33mf2d7b51b[m lang changes
+[33m043a5045[m Merge pull request #3 from mostafatahaa/testing
+[33mcbba1855[m cart new logic
+[33m696131f0[m new cart status
+[33m88ef3971[m Merge pull request #2 from mostafatahaa/testing
+[33mbb451590[m images
+[33m495af3df[m brands header
+[33mf5466047[m discripe the checkout
+[33m7bf2f654[m make website searching and make brands page and start handling the checkout
+[33m1ab8c622[m testing
+[33m58dc43e4[m checkout and profile
+[33ma53106ac[m favouratis products and translating
+[33m47f9c723[m Merge pull request #1 from mostafatahaa/testing
+[33m91d37e07[m orders page and its taps returns addresses profile
+[33m2cc484c4[m website categories and product details
+[33m60d0ce52[m front static pages and cart
+[33md52de8f4[m start front layoutes website
+[33m933c91bb[m translation
+[33m8ed1ab3e[m product choices
+[33me5f90998[m city in repoository
+[33m60ed1ed5[m create city
+[33m124ba5a0[m edit and update categories choice
+[33m1803f8cc[m create choices
+[33m01b0b995[m product images and update
+[33m1afefeaa[m update component inputs of projects
+[33maf6a962f[m header banners
+[33m92177059[m reports update
+[33m19055e44[m project js handling
+[33mbaf195c3[m repository controller finished
+[33m6d3628ae[m shipping report and continue repository
+[33m359cdd8c[m return products reports
+[33md99b2c5b[m reports
+[33m7b7f55bf[m reports_blade
+[33m05433d0b[m update main categories
+[33m5f5f5b46[m commonQuestion and BulkOrders and Representatives orders
+[33m2523e99b[m advertisement_reposiory
+[33m623daa12[m repository modules of dicount_code  & static_pages product_availability
+[33mb99be1dc[m product update
+[33mf5dd3b69[m shiping_update
+[33m14a94858[m shipping crtae
+[33m7f2a891e[m create shipping
+[33maf2bdb6b[m shipping section
+[33mcc163e39[m products_subcategories
+[33mc4e5b20d[m storage ignore
+[33ma1143c3f[m product create  with new sub categories
+[33m2b5877a1[m countery-repository
+[33m4261b5a8[m update design controller
+[33m981907eb[m update banners systems and separation banners pages in one page(designs)
+[33m3f130e42[m update designs
+[33ma57ccd0c[m Add pages section
+[33mce0adb90[m finish banners and start to static pages
+[33m8373b642[m Add .gitignore file
+[33mb7f952af[m Change Banners System
+[33m3506a280[m currency repository
+[33m172c954b[m starting currency create eleqoent
+[33m853eab45[m using translating of arabic messages and create repository of settings
+[33mb8324941[m form input component for color View
+[33m90140776[m Create repository for Color Module
+[33m5a88d72c[m update database of maincategory
+[33mf2f9227a[m hande controller logic from repository
+[33m154ae2f6[m form component in designs and companies
+[33m580e2f61[m Update designs repository and remove services repository
+[33m6c4f0f58[m Create repository for SendNewsToUser Module
+[33m14facc68[m Client repository module
+[33mffce3d36[m company module repository
+[33m6e625b93[m design module
+[33m4353d8d4[m test
+[33m0c9a71fe[m Delete teat.php
+[33md0f004dd[m Update teat.php
+[33m2d69c33f[m Update teat.php
+[33m1edc1850[m Create teat.php
+[33mf8c7b0f2[m test
+[33mc39a546f[m ddd
+[33mc5d1d7c7[m test
+[33ma7b6508b[m Create this file lang/ar/messages.php
+[33mfd95cd73[m Create this file lang/ar/messages.php
+[33m653964f6[m testing config
+[33m889a6db7[m[33m ([m[1;31morigin/master[m[33m, [m[1;31morigin/HEAD[m[33m, [m[1;32mmaster[m[33m)[m add env file
+[33m7abfec16[m initial commit
