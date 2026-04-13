@@ -64,7 +64,13 @@
                         <a class="dropdown-item d-flex align-items-center" href="{{route('profile.settings.index')}}"><i
                                     class="mdi mdi-cog font-size-17 align-middle me-1"></i>الاعدادات</a>
 
-                        @livewire('admin.auth.admin-logout-component')
+                        <form method="POST" action="{{ route('admin.logout') }}" class="d-inline">
+                            @csrf
+                            <button type="submit" class="dropdown-item text-danger">
+                                <i class="mdi mdi-power font-size-17 align-middle me-1 text-danger"></i>
+                                تسجيل الخروج
+                            </button>
+                        </form>
                     </div>
                 </div>
 

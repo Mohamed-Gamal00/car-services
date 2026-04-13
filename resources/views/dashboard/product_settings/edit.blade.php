@@ -73,7 +73,8 @@
                                 </div>
 
 
-                                <livewire:categories />
+                                {{-- Livewire component disabled --}}
+                                {{-- <livewire:categories /> --}}
                                 <div class="row mb-3">
                                     <label class="col-sm-2 col-form-label">حالة المنتج</label>
                                     <div class="col-sm-10">

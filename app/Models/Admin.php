@@ -60,4 +60,22 @@ class Admin extends Authenticatable
     {
         return $this->status === 'active';
     }
+
+    /**
+     * Check if admin has a specific ability/permission
+     * Super admins have all permissions
+     * Regular admins need role system (not implemented yet)
+     */
+    public function hasAbility($ability)
+    {
+        // Super admins have all permissions
+        if ($this->is_super_admin) {
+            return true;
+        }
+
+        // For regular admins, you would check their role/group permissions here
+        // Since role system is not implemented, grant all permissions for now
+        // TODO: Implement proper role-based permissions
+        return true;
+    }
 }

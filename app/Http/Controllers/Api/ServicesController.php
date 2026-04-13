@@ -10,7 +10,7 @@ use App\Models\Captain;
 use App\Models\Guest;
 use App\Models\Order;
 use App\Models\Package;
-use App\Models\Product;
+use App\Models\Service;
 use App\Models\Setting;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -22,7 +22,7 @@ class ServicesController extends Controller
     public function getServices()
     {
 
-        $services = Product::where('status', 'active')->get();
+        $services = Service::where('status', 'active')->get();
 
         if (count($services) > 0) {
             return ApiResponse::sendResponse(200, ' services Retrieved Successfully', ViewServiceResource::collection($services));
@@ -34,7 +34,7 @@ class ServicesController extends Controller
     //service details
     public function getService_id($service_id)
     {
-        $service = Product::findOrFail($service_id);
+        $service = Service::findOrFail($service_id);
         if ($service) {
             return ApiResponse::sendResponse(200, 'Service Retrieved Successfully', new ViewServiceResource($service));
         }
@@ -58,7 +58,7 @@ class ServicesController extends Controller
                 ], 422);
             }
 
-            $service = Product::findOrFail($service_id);
+            $service = Service::findOrFail($service_id);
             $serviceDuration = $service->duration;
         }
 
@@ -183,7 +183,7 @@ class ServicesController extends Controller
     {
         // Fetch all reservations for the given date and service, format booking_time to 'H:i'
         $reservedTimes = Order::where('booking_date', $date)
-            ->where('product_id', $service_id)
+            ->where('service_id', $service_id)
             ->get()
             ->pluck('booking_time')
             ->map(function ($time) {

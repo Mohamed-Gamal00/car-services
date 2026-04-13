@@ -89,10 +89,10 @@ Route::group(['middleware' => 'admin'], function () {
     Route::resource('/dashboard/shipping_companies', ShippingCompanyController::class);
     Route::get('/get-cities/{countryId}', [ShippingCompanyController::class, 'getCities']);
 
-    //-----------------------------------------------------------------------------/softDelete Products
-    Route::get('/dashboard/products/trash', [productsController::class, 'trash'])->name('products.trash');
-    Route::put('/dashboard/products/{id}/restore', [productsController::class, 'restore'])->name('products.restore');
-    Route::delete('/dashboard/products/{id}/force-delete', [productsController::class, 'forceDelete'])->name('products.force-delete');
+    //-----------------------------------------------------------------------------/softDelete Services
+    Route::get('/dashboard/services/trash', [\App\Http\Controllers\Dashboard\ServicesController::class, 'trash'])->name('services.trash');
+    Route::put('/dashboard/services/{id}/restore', [\App\Http\Controllers\Dashboard\ServicesController::class, 'restore'])->name('services.restore');
+    Route::delete('/dashboard/services/{id}/force-delete', [\App\Http\Controllers\Dashboard\ServicesController::class, 'forceDelete'])->name('services.force-delete');
 
     //----------------------------------------------/Main Categories
     Route::resource('/dashboard/main_categories', MainCategoriesController::class);
@@ -109,18 +109,22 @@ Route::group(['middleware' => 'admin'], function () {
 
     Route::resource('/dashboard/filters', MainCategoriesSettingsController::class);
 
-    //----------------------------------------------/Products routes
-    // Route::post('/dashboard/header_banner/delete', [HeaderBanerController::class, 'frontHeaderRemoveImage'])->name('headerImage.remove');
+    //----------------------------------------------/Services routes (New Booking System)
+    Route::get('/dashboard/services/trash', [\App\Http\Controllers\Dashboard\ServicesController::class, 'trash'])->name('services.trash');
+    Route::put('/dashboard/services/{id}/restore', [\App\Http\Controllers\Dashboard\ServicesController::class, 'restore'])->name('services.restore');
+    Route::delete('/dashboard/services/{id}/force-delete', [\App\Http\Controllers\Dashboard\ServicesController::class, 'forceDelete'])->name('services.force-delete');
+    Route::resource('/dashboard/services', \App\Http\Controllers\Dashboard\ServicesController::class);
+    
+    //----------------------------------------------/Packages routes
+    Route::resource('/dashboard/packages', PackageController::class);
 
+    //----------------------------------------------/Products routes (OLD - Keep for backward compatibility if needed)
     Route::post('/product_images/delete', [ProductsController::class, 'imageDelete'])->name('image.delete');
-
     Route::get('/sub_category/{categoryId}', [ProductsController::class, 'subCategory'])->name('sub_category');
     Route::post('/search', [ProductsController::class, 'search'])->name('search');
     Route::get('/dashboard/products/out_of_stock', [ProductsController::class, 'outOfStock'])->name('out_of_stock');
     Route::get('/fetch-choices', [ProductsController::class, 'fetchChoices'])->name('fetch.choices');
-
     Route::resource('/dashboard/products', ProductsController::class);
-    Route::resource('/dashboard/packages', PackageController::class);
 
     //----------------------------------------------/Products Settings routes
     Route::get('/dashboard/products_settings/{id}/filters', [ProductSettingsController::class, 'productFilters'])->name('products.filters');
@@ -239,5 +243,15 @@ Route::group(['middleware' => 'admin'], function () {
 
 });
 
-//----------------------------------------------/Admin login
-Route::view('admin/login', 'admin.auth.login')->middleware('guest:admin')->name('admin.login');
+//----------------------------------------------/Admin Authentication
+Route::get('admin/login', [\App\Http\Controllers\Admin\AdminAuthController::class, 'showLoginForm'])
+    ->middleware('guest:admin')
+    ->name('admin.login');
+
+Route::post('admin/login', [\App\Http\Controllers\Admin\AdminAuthController::class, 'login'])
+    ->middleware('guest:admin')
+    ->name('admin.login.submit');
+
+Route::post('admin/logout', [\App\Http\Controllers\Admin\AdminAuthController::class, 'logout'])
+    ->middleware('admin')
+    ->name('admin.logout');

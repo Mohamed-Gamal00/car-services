@@ -11,7 +11,8 @@ use App\Models\Choice;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\OrderStatus;
-use App\Models\Product;
+use App\Models\Service;
+use App\Models\Package;
 use App\Models\Setting;
 use App\Models\UserPackage;
 use App\Notifications\CaptainAssignedNotification;
@@ -190,7 +191,7 @@ class CheckoutService
             throw new \Exception('يجب تحديد service_id أو user_package_id', 422);
         }
 
-        $service = Product::findOrFail($service_id);
+        $service = Service::findOrFail($service_id);
         $orderServicePrice = $service->price;
         $additionalServicePrice = 0;
 

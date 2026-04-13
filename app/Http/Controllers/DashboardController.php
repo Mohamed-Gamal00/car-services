@@ -2,28 +2,47 @@
 
 namespace App\Http\Controllers;
 
-use App\currency\Currency;
-use App\Http\Middleware\Admin;
 use App\Models\ContactUs;
 use App\Models\Order;
-use App\Models\Product;
+use App\Models\Service;
+use App\Models\Package;
+use App\Models\Captain;
 use App\Models\Setting;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 
 class DashboardController extends Controller
 {
     public function index()
     {
-        $productsCount = Product::count();
+        $servicesCount = Service::count();
+        $packagesCount = Package::count();
         $ordersCount = Order::count();
         $usersCount = User::count();
+        $captainsCount = Captain::count();
         $messagesCount = ContactUs::count();
         $adminsCount = \App\Models\Admin::count();
-//         $mainCurrency = DB::table('currencies')->select('name_ar')->where('default_currency', true)->first();
-        return view('dashboard.dashboard', \compact('productsCount', 'ordersCount', 'usersCount', 'adminsCount', 'messagesCount'));
+        
+        // Recent statistics
+        $todayOrders = Order::whereDate('created_at', today())->count();
+        $availableCaptains = Captain::where('status', 'available')->where('is_active', true)->count();
+        $busyCaptains = Captain::where('status', 'busy')->where('is_active', true)->count();
+        $totalRevenue = Order::where('payment_status', 'paid')->sum('total_price');
+        
+        return view('dashboard.dashboard', compact(
+            'servicesCount', 
+            'packagesCount', 
+            'ordersCount', 
+            'usersCount', 
+            'captainsCount',
+            'adminsCount', 
+            'messagesCount',
+            'todayOrders',
+            'availableCaptains',
+            'busyCaptains',
+            'totalRevenue'
+        ));
     }
 }

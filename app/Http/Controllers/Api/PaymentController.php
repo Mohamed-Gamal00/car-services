@@ -13,7 +13,7 @@ use App\Models\Captain;
 use App\Models\Order;
 use App\Models\Package;
 use App\Models\Payment;
-use App\Models\Product;
+use App\Models\Service;
 use App\Models\Setting;
 use App\Models\User;
 use App\Models\UserPackage;
@@ -105,7 +105,7 @@ class PaymentController extends Controller
             return redirect()->back()->with('success', __('messages.PaidPayment'));
         }
 
-        $service = Product::where('id', $order->product_id)->first();
+        $service = Service::where('id', $order->service_id)->first();
         $availableCaptains = Captain::where('status', 'available')->where('is_active', 1)->get();
         if ($payment['status'] === 'paid') {
             Log::info('success payment');

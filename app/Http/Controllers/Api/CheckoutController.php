@@ -21,7 +21,7 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\OrderStatus;
 use App\Models\Package;
-use App\Models\Product;
+use App\Models\Service;
 use App\Models\Setting;
 use App\Models\UserPackage;
 use App\Notifications\CaptainAssignedNotification;
@@ -469,7 +469,7 @@ class CheckoutController extends Controller
 
         $discountResponse = $this->discountHandler->applyDiscount(
             $request->discount_code,
-            $order->product_id,
+            $order->service_id,
             $order->totalBeforeDiscount,
             $user->id
         );

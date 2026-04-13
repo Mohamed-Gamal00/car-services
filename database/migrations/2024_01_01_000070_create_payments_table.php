@@ -23,7 +23,6 @@ return new class extends Migration
             $table->timestamps();
             
             $table->index(['user_id', 'status']);
-            $table->index(['payable_type', 'payable_id']);
         });
     }
 

@@ -14,9 +14,9 @@ class OrderItem extends Pivot
     public $timestamps = false;
     protected $table = 'order_items';
 
-    public function product()
+    public function service()
     {
-        return $this->belongsTo(Product::class);
+        return $this->belongsTo(Service::class);
     }
 
     public function order()

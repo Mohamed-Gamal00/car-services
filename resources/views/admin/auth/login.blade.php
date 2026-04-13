@@ -22,7 +22,48 @@
                             </a>
                         </div>
                     </div>
-                    @livewire('admin.auth.admin-login-component')
+                    <div class="card-body p-4">
+                        <div class="p-3">
+                            <form class="mt-4" method="POST" action="{{ route('admin.login.submit') }}">
+                                @csrf
+
+                                @if ($errors->any())
+                                    <div class="alert alert-danger">
+                                        <ul class="mb-0">
+                                            @foreach ($errors->all() as $error)
+                                                <li>{{ $error }}</li>
+                                            @endforeach
+                                        </ul>
+                                    </div>
+                                @endif
+
+                                <div class="mb-3">
+                                    <label class="form-label" for="email">البريد الإلكتروني</label>
+                                    <input type="email" class="form-control" id="email" name="email" 
+                                           placeholder="أدخل البريد الإلكتروني" value="{{ old('email') }}" required>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label" for="password">كلمة المرور</label>
+                                    <input type="password" class="form-control" id="password" name="password" 
+                                           placeholder="أدخل كلمة المرور" required>
+                                </div>
+
+                                <div class="mb-3 form-check">
+                                    <input type="checkbox" class="form-check-input" id="remember" name="remember">
+                                    <label class="form-check-label" for="remember">تذكرني</label>
+                                </div>
+
+                                <div class="mb-3 row">
+                                    <div class="col-12 text-end">
+                                        <button class="btn btn-primary w-100 waves-effect waves-light" type="submit">
+                                            تسجيل الدخول
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
 
                 </div>
 
