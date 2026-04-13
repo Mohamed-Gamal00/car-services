@@ -3,90 +3,74 @@
 namespace App\Console\Commands;
 
 use App\Helper\Helper;
-use App\Models\UserPackage;
-use Illuminate\Console\Command;
-use App\Models\Order;
-use App\Models\Captain;
 use App\Jobs\MakeCaptainAvailableJob;
+use App\Models\Captain;
+use App\Models\Order;
+use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 
 class ProcessUnassignedOrders extends Command
 {
     use Helper;
 
-    /**
-     * The name and signature of the console command.
-     *
-     * @var string
-     */
     protected $signature = 'orders:process-unassigned';
+    protected $description = 'Process unassigned orders and assign available captains';
 
-    /**
-     * The console command description.
-     *
-     * @var string
-     */
-    protected $description = 'Assign captains to unassigned orders for the current day';
-
-    /**
-     * Execute the console command.
-     */
     public function handle()
     {
-        // Get all unassigned orders for the current day
         $unassignedOrders = Order::whereNull('captain_id')
             ->where('booking_date', now()->toDateString())
             ->where('payment_status', 'paid')
             ->get();
 
+        $this->info("Found {$unassignedOrders->count()} unassigned orders for today");
+
         foreach ($unassignedOrders as $order) {
-            $captain = Captain::where('status', 'available')->where('is_active', 1)->first();
+            $captain = Captain::available()->first();
+            
             if ($captain) {
                 // Assign captain to the order
-                $order->captain_id = $captain->id;
-                $order->save();
+                $order->update([
+                    'captain_id' => $captain->id,
+                    'order_status_id' => 3, // Assigned status
+                ]);
 
                 // Mark captain as busy
-                $captain->status = 'busy';
-                $captain->save();
-                $tokens = $captain->devicetokens->pluck('token')->toArray();
-                Log::info('Captain Device Tokens', ['captain_id' => $captain->id, 'tokens' => $tokens]);
+                $captain->update(['status' => 'busy']);
 
-                if ($tokens) {
-                    $data = ['order_id' => $order->id];
-                    $this->notifyByFirebase('إشعار جديد', 'هناك طلب جديد خاص بك', $tokens, $data);
-                    Log::info('Notification Sent to Firebase', ['tokens' => $tokens, 'data' => $data]);
+                // Send notification to captain
+                $this->sendCaptainNotification($captain, $order);
 
-                } else {
-                    Log::error('No device tokens for captain', ['captain_id' => $captain->id]);
-                }
-                // Schedule to make the captain available after order duration
-
-                $userpackage = UserPackage::with('package')->find($order->user_package_id);
-                $product = $order->products->first();
-
-                $duration = $product?->duration ?? $userpackage?->package?->duration;
-
-                dispatch(new MakeCaptainAvailableJob($captain->id))
-                    ->delay(now()->addMinutes($this->convertTimeToMinutes($duration)));
-//                MakeCaptainAvailableJob::dispatch($captain->id)
-//                    ->delay(now()->addMinutes($this->convertTimeToMinutes($order->products->first()->duration)));
+                // Schedule captain to be available after service duration
+                $duration = $order->getServiceDuration();
+                MakeCaptainAvailableJob::dispatch($captain->id)
+                    ->delay(now()->addMinutes($duration));
 
                 $this->info("Assigned Captain ID {$captain->id} to Order ID {$order->id}");
             } else {
-                $this->info("No available captains for Order ID {$order->id}");
+                $this->warn("No available captain for Order ID {$order->id}");
             }
         }
 
-        $this->info('Finished processing unassigned orders.');
+        $this->info('Finished processing unassigned orders');
     }
 
-    /**
-     * Helper function to convert HH:MM duration to minutes.
-     */
-    private function convertTimeToMinutes($duration)
+    private function sendCaptainNotification($captain, $order)
     {
-        list($hours, $minutes) = explode(':', $duration);
-        return ($hours * 60) + $minutes;
+        app()->setLocale($captain->preferred_language ?? 'ar');
+        $tokens = $captain->deviceTokens->pluck('token')->toArray();
+
+        if ($tokens) {
+            $data = ['order_id' => $order->id];
+            $this->notifyByFirebase(
+                __('general.new_notification'),
+                __('general.There_is_a_new_request_for_you'),
+                $tokens,
+                $data
+            );
+            Log::info('Notification Sent to Firebase', ['tokens' => $tokens, 'data' => $data]);
+        } else {
+            Log::error('No device tokens for captain', ['captain_id' => $captain->id]);
+        }
     }
 }

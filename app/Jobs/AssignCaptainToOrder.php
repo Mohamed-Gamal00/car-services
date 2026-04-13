@@ -6,7 +6,6 @@ use App\Helper\Helper;
 use App\Models\Captain;
 use App\Models\Order;
 use App\Models\UserPackage;
-use App\Notifications\CaptainAssignedNotification;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -18,7 +17,6 @@ class AssignCaptainToOrder implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels, Helper;
 
-
     public function __construct()
     {
     }
@@ -28,36 +26,54 @@ class AssignCaptainToOrder implements ShouldQueue
         $today = now()->toDateString();
         $unassignedOrders = Order::whereNull('captain_id')
             ->where('payment_status', 'paid')
-            ->where('booking_date', $today) // Only today's orders
+            ->where('booking_date', $today)
             ->get();
+
         foreach ($unassignedOrders as $order) {
-            $captain = Captain::where('status', 'available')->where('is_active', 1)->first();
+            $captain = Captain::available()->first();
+            
             if ($captain) {
-                $order->captain_id = $captain->id;
-                $order->save();
+                // Assign captain to order
+                $order->update([
+                    'captain_id' => $captain->id,
+                    'order_status_id' => 3, // Assigned status
+                ]);
 
-                $captain->status = 'busy';
-                $captain->save();
-                $captain = Captain::findOrFail($order->captain_id);
-                app()->setLocale($captain->lang ?? 'ar');
-                $tokens = $captain->devicetokens->pluck('token')->toArray();
-                Log::info('Captain Device Tokens', ['captain_id' => $captain->id]);
+                // Mark captain as busy
+                $captain->update(['status' => 'busy']);
 
-                if ($tokens) {
-                    $data = ['order_id' => $order->id];
-                    $this->notifyByFirebase(__('general.new_notification'), __('general.There_is_a_new_request_for_you'), $tokens, $data);
-                    Log::info('Notification Sent to Firebase', ['tokens' => $tokens, 'data' => $data]);
+                // Send notification to captain
+                $this->sendCaptainNotification($captain, $order);
 
-                } else {
-                    Log::error('No device tokens for captain', ['captain_id' => $captain->id]);
-                }
-
-                $userpackage = UserPackage::with('package')->find($order->user_package_id);
-                $product = $order->products->first();
-
-                $duration = $product?->duration ?? $userpackage?->package?->duration;
-
+                // Schedule captain to be available after service duration
+                $duration = $order->getServiceDuration();
                 MakeCaptainAvailableJob::dispatch($captain->id)
+                    ->delay(now()->addMinutes($duration));
+
+                Log::info("Assigned Captain ID {$captain->id} to Order ID {$order->id}");
+            }
+        }
+    }
+
+    private function sendCaptainNotification($captain, $order)
+    {
+        app()->setLocale($captain->preferred_language ?? 'ar');
+        $tokens = $captain->deviceTokens->pluck('token')->toArray();
+
+        if ($tokens) {
+            $data = ['order_id' => $order->id];
+            $this->notifyByFirebase(
+                __('general.new_notification'),
+                __('general.There_is_a_new_request_for_you'),
+                $tokens,
+                $data
+            );
+            Log::info('Notification Sent to Firebase', ['tokens' => $tokens, 'data' => $data]);
+        } else {
+            Log::error('No device tokens for captain', ['captain_id' => $captain->id]);
+        }
+    }
+}
                     ->delay(now()->addMinutes($this->convertTimeToMinutes($duration)));
 
 //                MakeCaptainAvailableJob::dispatch($captain->id)

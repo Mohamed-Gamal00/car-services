@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Package extends Model
+class Service extends Model
 {
     use HasFactory;
 
@@ -14,10 +14,8 @@ class Package extends Model
         'name_en',
         'description',
         'description_en',
-        'wash_count',
         'price',
         'duration',
-        'validity_days',
         'image',
         'icon',
         'is_active',
@@ -30,14 +28,14 @@ class Package extends Model
     ];
 
     // Relationships
-    public function userPackages()
+    public function orders()
     {
-        return $this->hasMany(UserPackage::class);
+        return $this->hasMany(Order::class);
     }
 
-    public function features()
+    public function discountCodes()
     {
-        return $this->hasMany(PackageFeature::class)->orderBy('sort_order');
+        return $this->belongsToMany(DiscountCode::class, 'discount_code_services');
     }
 
     // Accessors
@@ -83,14 +81,7 @@ class Package extends Model
     // Helper methods
     public function getDurationInMinutes()
     {
-        if (!$this->duration) return 30; // Default 30 minutes
-        
         $time = explode(':', $this->duration);
         return ($time[0] * 60) + $time[1];
-    }
-
-    public function getPricePerWash()
-    {
-        return $this->price / $this->wash_count;
     }
 }

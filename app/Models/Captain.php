@@ -4,60 +4,105 @@ namespace App\Models;
 
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 
 class Captain extends Authenticatable
-
 {
     use HasApiTokens, HasFactory, Notifiable;
 
     protected $fillable = [
         'name',
-        'last_name',
-        'phone_number',
+        'phone',
+        'password',
+        'avatar',
         'status',
         'is_active',
-        'password',
         'latitude',
         'longitude',
-        'image',
         'notes',
-        'remember_token'
+        'preferred_language',
     ];
+
     protected $hidden = [
         'password',
         'remember_token',
     ];
 
+    protected $casts = [
+        'password' => 'hashed',
+        'is_active' => 'boolean',
+        'latitude' => 'decimal:8',
+        'longitude' => 'decimal:8',
+    ];
+
+    // Relationships
     public function orders()
     {
         return $this->hasMany(Order::class);
     }
 
-
-    public function getImageUrlAttribute()
+    public function deviceTokens()
     {
-        if (!$this->image) {
-            return asset('assets/images/no-image.jpg');
-        }
-        return asset('storage/' . $this->image);
-    }
-
-    public function devicetokens()
-    {
-        return $this->hasMany(DeviceToken::class);
-    }
-
-    public function averageRating()
-    {
-        return $this->ratings()->avg('stars');
+        return $this->morphMany(DeviceToken::class, 'tokenable');
     }
 
     public function ratings()
     {
-        return $this->hasMany(Rating::class, 'captain_id');
+        return $this->hasMany(Rating::class);
     }
 
+    // Accessors
+    public function getAvatarUrlAttribute()
+    {
+        if (!$this->avatar) {
+            return asset('assets/images/default-avatar.png');
+        }
+        return asset('storage/' . $this->avatar);
+    }
+
+    // Scopes
+    public function scopeActive($query)
+    {
+        return $query->where('is_active', true);
+    }
+
+    public function scopeAvailable($query)
+    {
+        return $query->where('status', 'available')->where('is_active', true);
+    }
+
+    public function scopeBusy($query)
+    {
+        return $query->where('status', 'busy');
+    }
+
+    // Helper methods
+    public function averageRating()
+    {
+        return $this->ratings()->avg('stars') ?? 0;
+    }
+
+    public function totalRatings()
+    {
+        return $this->ratings()->count();
+    }
+
+    public function isAvailable()
+    {
+        return $this->status === 'available' && $this->is_active;
+    }
+
+    public function isBusy()
+    {
+        return $this->status === 'busy';
+    }
+
+    public function getCurrentOrder()
+    {
+        return $this->orders()
+            ->where('booking_date', now()->toDateString())
+            ->whereIn('order_status_id', [3, 4, 5, 6]) // Assigned, On the way, Arrived, In progress
+            ->first();
+    }
 }

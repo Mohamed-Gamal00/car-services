@@ -9,21 +9,45 @@ class Car extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['name_ar', 'name_en'];
+    protected $fillable = [
+        'brand',
+        'model',
+        'year',
+        'color',
+        'is_active',
+    ];
 
-    public function getCurrentNameLangAttribute()
-    {
-        $locale = app()->getLocale();
-        if ($locale === 'ar' || empty($this->name_en)) {
-            return $this->name_ar;
-        }
-        return $this->name_en;
-    }
+    protected $casts = [
+        'is_active' => 'boolean',
+    ];
 
+    // Relationships
     public function users()
     {
         return $this->belongsToMany(User::class, 'user_cars')
-            ->withPivot('car_model')
+            ->withPivot('car_model', 'car_number', 'is_default')
             ->withTimestamps();
+    }
+
+    public function orders()
+    {
+        return $this->hasMany(Order::class);
+    }
+
+    // Scopes
+    public function scopeActive($query)
+    {
+        return $query->where('is_active', true);
+    }
+
+    public function scopeByBrand($query, $brand)
+    {
+        return $query->where('brand', $brand);
+    }
+
+    // Helper methods
+    public function getFullNameAttribute()
+    {
+        return trim($this->brand . ' ' . $this->model . ' ' . $this->year);
     }
 }

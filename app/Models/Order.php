@@ -2,110 +2,76 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Models\OrderAddress;
-use Illuminate\Support\Facades\DB;
-
 
 class Order extends Model
 {
     use HasFactory;
 
     protected $fillable = [
-        'product_id',
+        'number',
         'user_id',
+        'service_id',
+        'user_package_id',
         'captain_id',
         'car_id',
+        'order_status_id',
         'car_model',
         'car_number',
-        'image',
-        'note',
-        'booking_date',
-        'booking_time',
+        'address',
         'latitude',
         'longitude',
-        'location',
-        'order_status_id',
-        'updated_by_admin',
-        'payment_status',
-        'status',
-        'totalBeforeDiscount',
+        'city',
+        'district',
+        'booking_date',
+        'booking_time',
+        'notes',
+        'service_price',
+        'discount_amount',
         'total_price',
         'payment_method',
-        'return_order',
+        'payment_status',
         'is_arrived',
-        'discount_applied',
+        'is_completed',
         'rating_skipped',
         'invoice_url',
-        'is_delete',
-        'user_package_id',
     ];
 
+    protected $casts = [
+        'booking_date' => 'date',
+        'booking_time' => 'datetime',
+        'service_price' => 'decimal:2',
+        'discount_amount' => 'decimal:2',
+        'total_price' => 'decimal:2',
+        'latitude' => 'decimal:8',
+        'longitude' => 'decimal:8',
+        'is_arrived' => 'boolean',
+        'is_completed' => 'boolean',
+        'rating_skipped' => 'boolean',
+    ];
 
     protected static function booted()
     {
         static::creating(function (Order $order) {
-            $order->number = Order::getNextOrderNumber();
-        });
-
-        static::addGlobalScope('notDeleted', function (Builder $builder) {
-            $builder->where('is_delete', 0);
-        });
-
-    }
-
-    public static function getNextOrderNumber()
-    {
-        $year = date('Y'); // or Carbon::now()->year()
-
-        return DB::transaction(function () use ($year) {
-            // Lock the table to prevent concurrent access
-            $maxNumber = DB::table('orders')
-                ->whereYear('created_at', $year)
-                ->lockForUpdate()
-                ->max('number');
-
-            if ($maxNumber) {
-                return $maxNumber + 1;
-            }
-            return $year . '0001';
+            $order->number = self::generateOrderNumber();
         });
     }
 
-
+    // Relationships
     public function user()
     {
-        return $this->belongsTo(User::class, 'user_id', 'id')
-            ->withDefault([
-                'first_name' => 'زائر'
-            ]);
+        return $this->belongsTo(User::class);
     }
 
-    public function car()
+    public function service()
     {
-        return $this->belongsTo(Car::class, 'car_id');
+        return $this->belongsTo(Service::class);
     }
 
-    public function products()
+    public function userPackage()
     {
-        return $this->belongsToMany(Product::class, 'order_items', 'order_id', 'product_id', 'id')
-            ->using(OrderItem::class)
-            ->as('order_items')
-            ->withPivot([
-                'product_name', 'price', 'quantity',
-            ]);
-    }
-
-    public function choices()
-    {
-        return $this->belongsToMany(Choice::class, 'order_choices', 'order_id', 'choice_id');
-    }
-
-    public function images()
-    {
-        return $this->hasMany(OrderImage::class, 'order_id');
+        return $this->belongsTo(UserPackage::class);
     }
 
     public function captain()
@@ -113,56 +79,113 @@ class Order extends Model
         return $this->belongsTo(Captain::class);
     }
 
-    public function orderItems()
+    public function car()
     {
-        return $this->hasMany(OrderItem::class);
+        return $this->belongsTo(Car::class);
     }
 
     public function orderStatus()
     {
-        return $this->belongsTo(OrderStatus::class, 'order_status_id', 'id');
+        return $this->belongsTo(OrderStatus::class);
     }
 
-    public function addresses()
+    public function images()
     {
-        return $this->hasMany(OrderAddress::class, 'order_id', 'id');
+        return $this->hasMany(OrderImage::class);
     }
-
-    public function scopeFilter(Builder $builder, $filters)
-    {
-        $builder->when($filters['order_number'] ?? false, function ($builder, $value) {
-            $builder->where('orders.number', 'LIKE', "%{$value}%");
-        });
-
-        $builder->when($filters['order_status_id'] ?? false, function ($builder, $value) {
-            $builder->where('orders.order_status_id', $value);
-        });
-
-        $startAt = $filters['start_at'] ?? null;
-        $endAt = $filters['end_at'] ?? null;
-
-        if ($startAt && $endAt) {
-            $builder->whereBetween('orders.created_at', [$startAt, $endAt]);
-        } elseif ($startAt) {
-            $builder->whereDate('orders.created_at', '=', $startAt);
-        } elseif ($endAt) {
-            $builder->whereDate('orders.created_at', '=', $endAt);
-        }
-    }
-
 
     public function rating()
     {
         return $this->hasOne(Rating::class);
     }
 
-    public function averageRating()
+    public function payments()
     {
-        return $this->ratings()->avg('stars');
+        return $this->morphMany(Payment::class, 'payable');
     }
 
-    public function userPackage()
+    // Scopes
+    public function scopeToday($query)
     {
-        return $this->belongsTo(UserPackage::class, 'user_package_id');
+        return $query->where('booking_date', now()->toDateString());
+    }
+
+    public function scopePending($query)
+    {
+        return $query->whereNull('captain_id')->where('payment_status', 'paid');
+    }
+
+    public function scopeAssigned($query)
+    {
+        return $query->whereNotNull('captain_id');
+    }
+
+    public function scopeCompleted($query)
+    {
+        return $query->where('is_completed', true);
+    }
+
+    // Helper methods
+    public static function generateOrderNumber()
+    {
+        $prefix = 'QC';
+        $date = now()->format('Ymd');
+        $lastOrder = self::whereDate('created_at', now())->latest()->first();
+        
+        if ($lastOrder) {
+            $lastNumber = (int) substr($lastOrder->number, -4);
+            $newNumber = str_pad($lastNumber + 1, 4, '0', STR_PAD_LEFT);
+        } else {
+            $newNumber = '0001';
+        }
+        
+        return $prefix . $date . $newNumber;
+    }
+
+    public function isFromPackage()
+    {
+        return !is_null($this->user_package_id);
+    }
+
+    public function isPaid()
+    {
+        return $this->payment_status === 'paid';
+    }
+
+    public function isAssigned()
+    {
+        return !is_null($this->captain_id);
+    }
+
+    public function canBeCancelled()
+    {
+        return !in_array($this->order_status_id, [6, 7]); // Not in progress or completed
+    }
+
+    public function getStatusColorAttribute()
+    {
+        return $this->orderStatus->color ?? '#6c757d';
+    }
+
+    public function getStatusNameAttribute()
+    {
+        $locale = app()->getLocale();
+        if ($locale === 'en' && $this->orderStatus->name_en) {
+            return $this->orderStatus->name_en;
+        }
+        return $this->orderStatus->name;
+    }
+
+    public function getServiceDuration()
+    {
+        if ($this->service) {
+            return $this->service->getDurationInMinutes();
+        }
+        
+        if ($this->userPackage && $this->userPackage->package) {
+            return $this->userPackage->package->getDurationInMinutes();
+        }
+        
+        return 30; // Default 30 minutes
     }
 }

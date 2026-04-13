@@ -7,19 +7,31 @@ use Illuminate\Database\Eloquent\Model;
 
 class DeviceToken extends Model
 {
-    protected $table = 'devicestokens';
-
     use HasFactory;
 
-    protected $fillable = ['token', 'type', 'user_id', 'captain_id'];
+    protected $fillable = [
+        'tokenable_type',
+        'tokenable_id',
+        'token',
+        'device_type',
+    ];
 
-    public function user()
+    // Relationships
+    public function tokenable()
     {
-        return $this->belongsTo(User::class, 'user_id');
+        return $this->morphTo();
     }
 
-    public function captain()
+    // Scopes
+    public function scopeForUser($query, $userId)
     {
-        return $this->belongsTo(Captain::class, 'captain_id');
+        return $query->where('tokenable_type', User::class)
+            ->where('tokenable_id', $userId);
+    }
+
+    public function scopeForCaptain($query, $captainId)
+    {
+        return $query->where('tokenable_type', Captain::class)
+            ->where('tokenable_id', $captainId);
     }
 }

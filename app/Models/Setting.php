@@ -10,69 +10,56 @@ class Setting extends Model
     use HasFactory;
 
     protected $fillable = [
-        'website_name',
-        'website_name_en',
-        'address',
-        'address_en',
-        'subscription_title',
-        'subscription_title_en',
-        'phone',
-        'whatsaap',
-        'image',
-        'facebook',
-        'twitter',
+        'key',
+        'value',
+        'type',
+        'group',
         'description',
-        'email',
-        'logo',
-        'instagram',
-        'phone_number',
-        'snap',
-        'tiktok',
-        'tax_number',
-        'value_added_tax',
-        'publishable_key',
-        'secret_key',
-        'sms_api_key',
-        'sms_user_name',
-        'sernder',
-        'working_strat_time',
-        'working_end_time',
-        'start_rest_time',
-        'end_rest_time',
     ];
 
-    public function getImageUrlAttribute()
+    // Helper methods
+    public static function get($key, $default = null)
     {
-        if (!$this->image) {
-            return asset('assets/images/logo.jpg');
+        $setting = self::where('key', $key)->first();
+        
+        if (!$setting) {
+            return $default;
         }
-        return asset('storage/' . $this->image);
+        
+        return self::castValue($setting->value, $setting->type);
     }
 
-    public function getCurrentNameLangAttribute()
+    public static function set($key, $value, $type = 'string', $group = 'general')
     {
-        $locale = app()->getLocale();
-        if ($locale === 'ar' || empty($this->website_name_en)) {
-            return $this->website_name;
-        }
-        return $this->website_name_en;
+        return self::updateOrCreate(
+            ['key' => $key],
+            [
+                'value' => $value,
+                'type' => $type,
+                'group' => $group,
+            ]
+        );
     }
 
-    public function getCurrentAddressLangAttribute()
+    protected static function castValue($value, $type)
     {
-        $locale = app()->getLocale();
-        if ($locale === 'ar' || empty($this->address)) {
-            return $this->address;
+        switch ($type) {
+            case 'boolean':
+                return (bool) $value;
+            case 'integer':
+                return (int) $value;
+            case 'float':
+                return (float) $value;
+            case 'json':
+                return json_decode($value, true);
+            default:
+                return $value;
         }
-        return $this->address_en;
     }
 
-    public function getCurrentSubscription_titleLangAttribute()
+    // Scopes
+    public function scopeByGroup($query, $group)
     {
-        $locale = app()->getLocale();
-        if ($locale === 'ar' || empty($this->subscription_title)) {
-            return $this->subscription_title;
-        }
-        return $this->subscription_title_en;
+        return $query->where('group', $group);
     }
 }

@@ -3,47 +3,61 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
-use App\Models\Rule;
-use Illuminate\Foundation\Auth\User;
+use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
-class Admin extends User
+class Admin extends Authenticatable
 {
     use HasFactory, Notifiable;
 
-    protected $guard = 'admin';
+    protected $fillable = [
+        'name',
+        'email',
+        'password',
+        'avatar',
+        'is_super_admin',
+        'status',
+    ];
 
-    protected $fillable = ['name', 'email', 'password', 'super_admin', 'image'];
+    protected $hidden = [
+        'password',
+        'remember_token',
+    ];
 
+    protected $casts = [
+        'email_verified_at' => 'datetime',
+        'password' => 'hashed',
+        'is_super_admin' => 'boolean',
+    ];
 
-    public function rules()
+    // Accessors
+    public function getAvatarUrlAttribute()
     {
-        return $this->belongsToMany(Rule::class, 'admin_rule');
+        if (!$this->avatar) {
+            return asset('assets/images/default-avatar.png');
+        }
+        return asset('storage/' . $this->avatar);
     }
 
-    public function getImageUrlAttribute()
+    // Scopes
+    public function scopeActive($query)
     {
-        if (!$this->image) {
-            return asset('assets/images/admin.jpg');
-        }
-        return asset('storage/' . $this->image);
+        return $query->where('status', 'active');
     }
 
-    public function hasAbility($ability)
+    public function scopeSuperAdmin($query)
     {
-        $notAllow = $this->rules()->whereHas('abilities', function ($query) use ($ability) {
-            $query->where('ability', $ability)
-                ->where('type', '!=', 'allow');
-        })->exists();
+        return $query->where('is_super_admin', true);
+    }
 
-        if ($notAllow) {
-            return false;
-        }
+    // Helper methods
+    public function isSuperAdmin()
+    {
+        return $this->is_super_admin;
+    }
 
-        return $this->rules()->whereHas('abilities', function ($query) use ($ability) {
-            $query->where('ability', $ability)
-                ->where('type', '=', 'allow');
-        })->exists();
+    public function isActive()
+    {
+        return $this->status === 'active';
     }
 }

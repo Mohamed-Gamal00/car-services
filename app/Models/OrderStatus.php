@@ -7,17 +7,41 @@ use Illuminate\Database\Eloquent\Model;
 
 class OrderStatus extends Model
 {
-  use HasFactory;
+    use HasFactory;
 
-  public $timestamps = false;
-  protected $fillable = ['name', 'name_en', 'default_status', 'arrangement'];
+    protected $fillable = [
+        'name',
+        'name_en',
+        'color',
+        'sort_order',
+        'is_active',
+    ];
 
-  public function getCurrentNameLangAttribute()
-  {
-    $locale = app()->getLocale();
-    if ($locale === 'ar' || empty($this->name_en)) {
-      return $this->name;
+    protected $casts = [
+        'is_active' => 'boolean',
+    ];
+
+    // Relationships
+    public function orders()
+    {
+        return $this->hasMany(Order::class);
     }
-    return $this->name_en;
-  }
+
+    // Accessors
+    public function getCurrentNameAttribute()
+    {
+        $locale = app()->getLocale();
+        return ($locale === 'en' && $this->name_en) ? $this->name_en : $this->name;
+    }
+
+    // Scopes
+    public function scopeActive($query)
+    {
+        return $query->where('is_active', true);
+    }
+
+    public function scopeOrdered($query)
+    {
+        return $query->orderBy('sort_order');
+    }
 }

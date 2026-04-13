@@ -8,9 +8,29 @@ use Illuminate\Database\Eloquent\Model;
 class OrderImage extends Model
 {
     use HasFactory;
-    protected $fillable = ['order_id', 'image'];
-     public function order()
+
+    protected $fillable = [
+        'order_id',
+        'image_path',
+        'type',
+        'description',
+    ];
+
+    // Relationships
+    public function order()
     {
         return $this->belongsTo(Order::class);
+    }
+
+    // Accessors
+    public function getImageUrlAttribute()
+    {
+        return asset('storage/' . $this->image_path);
+    }
+
+    // Scopes
+    public function scopeByType($query, $type)
+    {
+        return $query->where('type', $type);
     }
 }

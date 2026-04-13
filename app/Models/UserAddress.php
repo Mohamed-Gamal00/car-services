@@ -9,18 +9,39 @@ class UserAddress extends Model
 {
     use HasFactory;
 
-    public $timestamps = false;
+    protected $fillable = [
+        'user_id',
+        'title',
+        'address',
+        'latitude',
+        'longitude',
+        'city',
+        'district',
+        'is_default',
+    ];
 
-    protected $fillable = ['address_title', 'first_name', 'family_name', 'latitude', 'longitude', 'phone_number', 'user_id', 'address', 'city_id', 'country_id', 'main_address'];
+    protected $casts = [
+        'latitude' => 'decimal:8',
+        'longitude' => 'decimal:8',
+        'is_default' => 'boolean',
+    ];
 
-    public function country()
+    // Relationships
+    public function user()
     {
-        return $this->belongsTo(Country::class);
+        return $this->belongsTo(User::class);
     }
 
-    public function city()
+    // Scopes
+    public function scopeDefault($query)
     {
-        return $this->belongsTo(City::class);
+        return $query->where('is_default', true);
     }
 
+    // Helper methods
+    public function getFullAddressAttribute()
+    {
+        $parts = array_filter([$this->address, $this->district, $this->city]);
+        return implode(', ', $parts);
+    }
 }

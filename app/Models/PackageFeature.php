@@ -8,19 +8,39 @@ use Illuminate\Database\Eloquent\Model;
 class PackageFeature extends Model
 {
     use HasFactory;
-    protected $fillable = ['package_id', 'feature','feature_en'];
 
+    protected $fillable = [
+        'package_id',
+        'feature',
+        'feature_en',
+        'icon',
+        'sort_order',
+    ];
+
+    // Relationships
     public function package()
     {
         return $this->belongsTo(Package::class);
     }
 
-    public function getCurrentNameLangAttribute()
+    // Accessors
+    public function getCurrentFeatureAttribute()
     {
         $locale = app()->getLocale();
-        if ($locale === 'ar' || empty($this->feature_en)) {
-            return $this->feature;
+        return ($locale === 'en' && $this->feature_en) ? $this->feature_en : $this->feature;
+    }
+
+    public function getIconUrlAttribute()
+    {
+        if (!$this->icon) {
+            return null;
         }
-        return $this->feature_en;
+        return asset('storage/' . $this->icon);
+    }
+
+    // Scopes
+    public function scopeOrdered($query)
+    {
+        return $query->orderBy('sort_order');
     }
 }

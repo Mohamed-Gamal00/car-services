@@ -9,20 +9,42 @@ class Rating extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['user_id', 'captain_id', 'order_id', 'stars', 'comment'];
+    protected $fillable = [
+        'order_id',
+        'user_id',
+        'captain_id',
+        'stars',
+        'comment',
+    ];
+
+    protected $casts = [
+        'stars' => 'integer',
+    ];
+
+    // Relationships
+    public function order()
+    {
+        return $this->belongsTo(Order::class);
+    }
 
     public function user()
     {
-        return $this->belongsTo(User::class, 'user_id');
+        return $this->belongsTo(User::class);
     }
 
     public function captain()
     {
-        return $this->belongsTo(Captain::class, 'captain_id');
+        return $this->belongsTo(Captain::class);
     }
 
-    public function order()
+    // Scopes
+    public function scopeByStars($query, $stars)
     {
-        return $this->belongsTo(Order::class);
+        return $query->where('stars', $stars);
+    }
+
+    public function scopeWithComment($query)
+    {
+        return $query->whereNotNull('comment')->where('comment', '!=', '');
     }
 }
