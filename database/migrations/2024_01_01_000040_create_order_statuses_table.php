@@ -15,6 +15,7 @@ return new class extends Migration
             $table->string('color', 7)->default('#007bff'); // Hex color code
             $table->integer('sort_order')->default(0);
             $table->boolean('is_active')->default(true);
+            $table->boolean('default_status')->default(false); // Default status for new orders
             $table->timestamps();
         });
     }

@@ -89,6 +89,11 @@ class Order extends Model
         return $this->belongsTo(OrderStatus::class);
     }
 
+    public function choices()
+    {
+        return $this->belongsToMany(Choice::class, 'order_choices', 'order_id', 'choice_id');
+    }
+
     public function images()
     {
         return $this->hasMany(OrderImage::class);
@@ -105,6 +110,19 @@ class Order extends Model
     }
 
     // Scopes
+    public function scopeFilter($query, $filters)
+    {
+        if (isset($filters['order_number']) && !empty($filters['order_number'])) {
+            $query->where('number', 'like', '%' . $filters['order_number'] . '%');
+        }
+
+        if (isset($filters['order_status_id']) && !empty($filters['order_status_id'])) {
+            $query->where('order_status_id', $filters['order_status_id']);
+        }
+
+        return $query;
+    }
+
     public function scopeToday($query)
     {
         return $query->where('booking_date', now()->toDateString());

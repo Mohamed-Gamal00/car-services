@@ -22,19 +22,14 @@ class OrderRepository implements OrderInterface
     {
         $filters = request()->only(['order_number', 'order_status_id']);
         return $this->order->latest()
-            ->with('user', 'addresses', 'car', 'orderStatus')
+            ->with('user', 'car', 'orderStatus', 'captain', 'service', 'userPackage.package')
             ->filter($filters)
             ->paginate();
     }
 
     public function show($id)
     {
-//        $order = $this->order->with('user', 'addresses')
-//            ->where('return_order', false)
-//            ->findOrFail($id);
-//        dd($order->user());
-
-        return $this->order->with('user', 'car', 'addresses', 'captain','userPackage.package')
+        return $this->order->with('user', 'car', 'captain', 'userPackage.package', 'service', 'choices', 'images', 'orderStatus')
             ->findOrFail($id);
     }
 

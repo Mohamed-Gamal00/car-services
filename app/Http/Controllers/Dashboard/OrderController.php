@@ -11,7 +11,7 @@ use App\Models\Color;
 use App\Models\Order;
 use App\Models\OrderStatus;
 use App\Models\Package;
-use App\Models\Product;
+use App\Models\Service;
 use App\Models\UserPackage;
 use App\Repositories\Order\OrderRepository;
 use Illuminate\Http\Request;

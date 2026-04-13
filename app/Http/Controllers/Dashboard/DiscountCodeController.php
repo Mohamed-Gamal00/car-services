@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Dashboard;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\DiscountCodeRequest;
 use App\Models\DiscountCode;
-use App\Models\Product;
+use App\Models\Service;
 use App\Repositories\Discount_codes\DiscountRepository;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -36,8 +36,8 @@ class DiscountCodeController extends Controller
     public function create()
     {
         Gate::authorize('discount_code.create');
-        $products = Product::select('id', 'name')->take(10)->get();
-        return view('dashboard.discount_codes.create', compact('products'));
+        $services = Service::select('id', 'name')->take(10)->get();
+        return view('dashboard.discount_codes.create', compact('services'));
     }
 
 
@@ -45,16 +45,16 @@ class DiscountCodeController extends Controller
     {
         $search = $request->input('q'); // Get the search term
 
-        $products = Product::select('id', 'name')
+        $services = Service::select('id', 'name')
             ->where('name', 'LIKE', "%{$search}%") // Filter based on the search term
             ->take(10) // Limit to 10 results
             ->get();
 
-        $formattedProducts = $products->map(function ($product) {
-            return ['id' => $product->id, 'text' => $product->name];
+        $formattedServices = $services->map(function ($service) {
+            return ['id' => $service->id, 'text' => $service->name];
         });
 
-        return response()->json($formattedProducts);
+        return response()->json($formattedServices);
     }
 
     /**
@@ -94,14 +94,14 @@ class DiscountCodeController extends Controller
     public function edit(string $id)
     {
         Gate::authorize('discount_code.edit');
-        $products = Product::select('id', 'name')->latest()->take(10)->get();
+        $services = Service::select('id', 'name')->latest()->take(10)->get();
         $discountCode = DiscountCode::findOrFail($id);
 
         // Decode the product_ids and ensure it returns an array
-        $discountProductsIds = $discountCode->products->pluck('id')->toArray();
-        // dd($discountProductsIds);
+        $discountServicesIds = $discountCode->products->pluck('id')->toArray();
+        // dd($discountServicesIds);
 
-        return view('dashboard.discount_codes.edit', compact('discountCode', 'products', 'discountProductsIds'));
+        return view('dashboard.discount_codes.edit', compact('discountCode', 'services', 'discountServicesIds'));
     }
 
     public function update(DiscountCodeRequest $request, string $id)

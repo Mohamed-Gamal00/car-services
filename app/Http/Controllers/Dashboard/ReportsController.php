@@ -10,7 +10,7 @@ use App\Http\Controllers\Controller;
 use App\Models\DiscountCode;
 use App\Models\Order;
 use App\Models\OrderStatus;
-use App\Models\Product;
+use App\Models\Service;
 use App\Models\User;
 use App\Repositories\Reports\ReportsRepository;
 use Illuminate\Http\Request;
