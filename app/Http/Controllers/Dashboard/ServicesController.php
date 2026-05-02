@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Dashboard;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\ProductRequest;
+use App\Http\Requests\ServiceRequest;
 use App\Models\Service;
 use App\Helper\Helper;
 use Illuminate\Http\Request;
@@ -19,7 +19,7 @@ class ServicesController extends Controller
      */
     public function index()
     {
-        Gate::authorize('product.view');
+        Gate::authorize('service.view');
         $services = Service::latest()->paginate(15);
 
         return view('dashboard.services.index', compact('services'));
@@ -30,7 +30,7 @@ class ServicesController extends Controller
      */
     public function create()
     {
-        Gate::authorize('product.create');
+        Gate::authorize('service.create');
         
         return view('dashboard.services.create');
     }
@@ -38,18 +38,25 @@ class ServicesController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(ProductRequest $request)
+    public function store(ServiceRequest $request)
     {
-        Gate::authorize('product.create');
+        Gate::authorize('service.create');
         $data = $request->validated();
 
-        $data['image'] = $this->uploadedImage(request(), 'image', 'services');
-        $data['slug'] = str_replace(' ', '-', $request->name);
+        // Upload main image
+        if ($request->hasFile('image')) {
+            $data['image'] = $this->uploadedImage($request, 'image', 'services');
+        }
+
+        // Upload icon if provided
+        if ($request->hasFile('icon')) {
+            $data['icon'] = $this->uploadedImage($request, 'icon', 'services/icons');
+        }
 
         Service::create($data);
 
         return redirect()->route('services.index')
-            ->with('success', __('messages.SERVICE_CREATED'));
+            ->with('success', 'تم إنشاء الخدمة بنجاح');
     }
 
     /**
@@ -57,7 +64,7 @@ class ServicesController extends Controller
      */
     public function show(string $id)
     {
-        Gate::authorize('product.view');
+        Gate::authorize('service.view');
         $service = Service::findOrFail($id);
         
         return view('dashboard.services.show', compact('service'));
@@ -68,7 +75,7 @@ class ServicesController extends Controller
      */
     public function edit(string $id)
     {
-        Gate::authorize('product.edit');
+        Gate::authorize('service.edit');
         $service = Service::findOrFail($id);
 
         return view('dashboard.services.edit', compact('service'));
@@ -77,77 +84,99 @@ class ServicesController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(ProductRequest $request, string $id)
+    public function update(ServiceRequest $request, string $id)
     {
-        Gate::authorize('product.edit');
+        Gate::authorize('service.edit');
         
         $service = Service::findOrFail($id);
         $data = $request->validated();
-        $data['slug'] = str_replace(' ', '-', $request->name);
 
+        // Upload new main image if provided
         if ($request->hasFile('image')) {
             // Delete old image
             if ($service->image) {
                 Storage::disk('public')->delete($service->image);
             }
-            $data['image'] = $this->uploadedImage(request(), 'image', 'services');
+            $data['image'] = $this->uploadedImage($request, 'image', 'services');
+        }
+
+        // Upload new icon if provided
+        if ($request->hasFile('icon')) {
+            // Delete old icon
+            if ($service->icon) {
+                Storage::disk('public')->delete($service->icon);
+            }
+            $data['icon'] = $this->uploadedImage($request, 'icon', 'services/icons');
         }
 
         $service->update($data);
 
         return redirect()->route('services.index')
-            ->with('success', __('messages.SERVICE_UPDATED'));
+            ->with('success', 'تم تحديث الخدمة بنجاح');
     }
 
     /**
-     * Remove the specified resource from storage.
+     * Remove the specified resource from storage (soft delete).
      */
     public function destroy(string $id)
     {
-        Gate::authorize('product.delete');
+        Gate::authorize('service.delete');
 
         $service = Service::findOrFail($id);
         
-        // Delete image if exists
+        // Soft delete (keeps images for potential restore)
+        $service->delete();
+
+        return redirect()->route('services.index')
+            ->with('dark', 'تم حذف الخدمة بنجاح');
+    }
+
+    /**
+     * Display trashed services.
+     */
+    public function trash()
+    {
+        Gate::authorize('service.trash.view');
+
+        $services = Service::onlyTrashed()->latest()->paginate(15);
+        return view('dashboard.services.trash', compact('services'));
+    }
+
+    /**
+     * Restore a soft-deleted service.
+     */
+    public function restore(Request $request, $id)
+    {
+        Gate::authorize('service.restore');
+        
+        $service = Service::onlyTrashed()->findOrFail($id);
+        $service->restore();
+        
+        return redirect()->back()
+            ->with('success', 'تم استعادة الخدمة بنجاح');
+    }
+
+    /**
+     * Permanently delete a service.
+     */
+    public function forceDelete($id)
+    {
+        Gate::authorize('service.delete.forever');
+
+        $service = Service::onlyTrashed()->findOrFail($id);
+        
+        // Delete images permanently
         if ($service->image) {
             Storage::disk('public')->delete($service->image);
         }
         
-        $service->delete();
-
-        return redirect()->route('services.index')
-            ->with('dark', __('messages.SERVICE_DELETED'));
-    }
-
-    public function trash()
-    {
-        Gate::authorize('product.trash.view');
-
-        $services = Service::onlyTrashed()->paginate();
-        return view('dashboard.services.trash', compact('services'));
-    }
-
-    public function restore(Request $request, $id)
-    {
-        Gate::authorize('product.restore');
-        $service = Service::onlyTrashed()->findOrFail($id);
-        $service->restore();
-        return redirect()->back()
-            ->with('success', __('messages.SERVICE_RESTORE'));
-    }
-
-    public function forceDelete($id)
-    {
-        Gate::authorize('product.delete.forever');
-
-        $service = Service::onlyTrashed()->findOrFail($id);
+        if ($service->icon) {
+            Storage::disk('public')->delete($service->icon);
+        }
+        
         $service->forceDelete();
 
-        if ($service->image) {
-            Storage::disk('public')->delete($service->image);
-        }
-
         return redirect()->back()
-            ->with('dark', __('messages.SERVICE_REMOVED'));
+            ->with('dark', 'تم حذف الخدمة نهائياً');
     }
 }

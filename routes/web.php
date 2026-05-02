@@ -203,4 +203,4 @@ Route::get('/payment-renewal-subscribe/{package_id}/{method}', [\App\Http\Contro
 Route::get('/payment-renewal-subscribe/{package_id}/payment/callback', [\App\Http\Controllers\Api\PaymentController::class, 'renewal_package_callback'])->name('payment.renewal_package_callback');
 
 
-require __DIR__ . '/dashboard.php';
+require __DIR__ . '/dashboard_cleaned.php';

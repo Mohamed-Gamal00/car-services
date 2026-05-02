@@ -44,10 +44,10 @@
                             <label for="example-text-input" class="col-sm-2 col-form-label">رقم الجوال
                             </label>
                             <div class="col-sm-10">
-                                <input class="form-control" name="phone_number" type="phone"
+                                <input class="form-control" name="phone" type="phone"
                                        id="example-text-input"
                                        value="">
-                                @error('phone_number')
+                                @error('phone')
                                 <span class="error">{{ $message }}</span>
                                 @enderror
                             </div>

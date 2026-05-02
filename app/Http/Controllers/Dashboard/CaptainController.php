@@ -38,11 +38,11 @@ class CaptainController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
-            'phone_number' => [
+            'phone' => [
                 'required',
                 'unique:captains',
                 'regex:/^05\d{8}$/',
-                'unique:users,phone_number',
+                'unique:users,phone',
             ],
             'password' => 'required|min:6|confirmed',
         ]);
