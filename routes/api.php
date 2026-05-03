@@ -39,6 +39,7 @@ Route::middleware(['changeLanguage'])->group(function () {
         Route::post('forget-password', 'forgetPassword');
         Route::post('logout', 'logout')->middleware('auth:user');
         Route::post('register-token', [UserAuthController::class, 'registerToken'])->middleware('auth:user');
+        Route::post('reset-password', [UserAuthController::class, 'resetPassword']);
     });
 
     #################################### User Profile #######################################
@@ -82,9 +83,6 @@ Route::middleware(['changeLanguage'])->group(function () {
         Route::post('/user-cancel-order/store', [\App\Http\Controllers\Api\UserOrdersController::class, 'cancelOrder']);
         Route::get('/non-rating-order', [\App\Http\Controllers\Api\UserOrdersController::class, 'NonRatingOrder']);
         Route::post('/skip-rating/{ordernumber}', [\App\Http\Controllers\Api\UserOrdersController::class, 'skipRating']);
-
-        /*forget password*/
-        Route::post('reset-password', [UserAuthController::class, 'resetPassword']);
 
 
         #-------------------------------------- notifications --------------------------------------------

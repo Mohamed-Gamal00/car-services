@@ -121,4 +121,9 @@ class User extends Authenticatable
 
         return $query;
     }
+
+    public function verificationCode()
+    {
+        return $this->hasOne(User_verfication::class);
+    }
 }

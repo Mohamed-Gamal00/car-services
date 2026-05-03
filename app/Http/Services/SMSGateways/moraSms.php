@@ -17,41 +17,74 @@ class moraSms
         }
     }
 
+    // public function sendSms($phone, $message, $language = 'en', $model = null)
+    // {
+    //     $setting = Setting::first();
+
+    //     try {
+    //         // API credentials
+    //         $apiKey = $setting->sms_api_key; // Mora API key
+    //         $username = $setting->sms_user_name; // Your username
+    //         $sender = $setting->sernder; // Sender name (owner name)
+    //         $phone_number = $phone; // phone of user who will receive sms
+    //         $sms_content = urlencode($message); //message
+
+    //         // Construct the Mora API URL
+    //         $url = "https://www.mora-sa.com/api/v1/sendsms?api_key=$apiKey&username=$username&message=$sms_content&numbers=$phone_number&sender=$sender&unicode=e&return=json";
+
+    //         // Send the GET request to the Mora API
+    //         $response = $this->client->get($url);
+
+    //         // Get the response body
+    //         $content = $response->getBody()->getContents();
+
+    //         $jsonResponse = json_decode($content, true);
+
+    //         if (isset($jsonResponse['status']['code']) && $jsonResponse['status']['code'] == 200) {
+    //             return true;
+    //         } else {
+    //             info("Mora API error status or unexpected response!");
+    //             return false;
+    //         }
+
+
+    //     } catch (Exception $e) {
+    //         // Log the exception message if the API call fails
+    //         info("Mora API failed to send SMS to $phone: " . $e->getMessage());
+    //         return false;
+    //     }
+    // }
+
     public function sendSms($phone, $message, $language = 'en', $model = null)
     {
-        $setting = Setting::first();
-
         try {
-            // API credentials
-            $apiKey = $setting->sms_api_key; // Mora API key
-            $username = $setting->sms_user_name; // Your username
-            $sender = $setting->sernder; // Sender name (owner name)
-            $phone_number = $phone; // phone of user who will receive sms
-            $sms_content = urlencode($message); //message
+            // مؤقتًا بدون integration مع SMS Provider
+            // Static response دائمًا success لتجربة النظام فقط
 
-            // Construct the Mora API URL
-            $url = "https://www.mora-sa.com/api/v1/sendsms?api_key=$apiKey&username=$username&message=$sms_content&numbers=$phone_number&sender=$sender&unicode=e&return=json";
+            info("Fake SMS Sent Successfully", [
+                'phone' => $phone,
+                'message' => $message,
+            ]);
 
-            // Send the GET request to the Mora API
-            $response = $this->client->get($url);
+            return [
+                'status' => [
+                    'code' => 200,
+                    'message' => 'SMS sent successfully (mock response)'
+                ],
+                'data' => [
+                    'phone' => $phone,
+                    'message' => $message
+                ]
+            ];
+        } catch (\Exception $e) {
+            info("Mock SMS failed: " . $e->getMessage());
 
-            // Get the response body
-            $content = $response->getBody()->getContents();
-
-            $jsonResponse = json_decode($content, true);
-
-            if (isset($jsonResponse['status']['code']) && $jsonResponse['status']['code'] == 200) {
-                return true;
-            } else {
-                info("Mora API error status or unexpected response!");
-                return false;
-            }
-
-
-        } catch (Exception $e) {
-            // Log the exception message if the API call fails
-            info("Mora API failed to send SMS to $phone: " . $e->getMessage());
-            return false;
+            return [
+                'status' => [
+                    'code' => 500,
+                    'message' => 'Mock SMS failed'
+                ]
+            ];
         }
     }
 }

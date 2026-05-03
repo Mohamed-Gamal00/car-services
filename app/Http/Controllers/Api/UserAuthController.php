@@ -62,10 +62,10 @@ class UserAuthController extends Controller
             'family_name' => 'nullable',
             'address' => 'nullable',
             'email' => 'nullable',
-            'phone_number' => [
+            'phone' => [
                 'required',
                 'regex:/^05\d{8}$/',
-                'unique:users,phone_number'
+                'unique:users,phone'
             ],
             'password' => 'required|string|min:6|confirmed'
         ]);
@@ -87,26 +87,25 @@ class UserAuthController extends Controller
             DB::transaction(function () use ($request, &$user) {
                 // Create the user
                 $user = User::create([
-                    'first_name' => $request->first_name,
-                    'family_name' => $request->family_name ?? null,
+                    'name' => $request->first_name . $request->family_name,
                     'address' => $request->address ?? null,
                     'email' => $request->email ?? null,
-                    'phone_number' => $request->phone_number,
+                    'phone' => $request->phone,
                     'password' => Hash::make($request->password),
                 ]);
             });
 
             // Generate the verification code and SMS
             $verificationData = $this->sms_service->setVerificationCode($user->id);
-//            return $verificationData;
+            //            return $verificationData;
             $message = $this->sms_service->getSMSVerifyMessageByAppName($verificationData->code);
-            $smsSent = $this->moraGateway->sendSms($user->phone_number, $message);
+            $smsSent = $this->moraGateway->sendSms($user->phone, $message);
 
-//            $smsSent = true;
+            //            $smsSent = true;
 
             if ($smsSent) {
                 return response()->json([
-                    'message' => "Verification code sent to your phone number",
+                    'message' => "Verification code sent to your phone number" . $smsSent['data']['message'],
                     'verification_required' => true,
                     'user_id' => $user->id,  // Send back user id for further verification process
                 ]);
@@ -115,7 +114,6 @@ class UserAuthController extends Controller
                     'message' => 'Failed to send verification SMS. Please try again.',
                 ], 500);
             }
-
         } catch (Exception $e) {
             return response()->json([
                 'status' => 'failed',
@@ -128,12 +126,12 @@ class UserAuthController extends Controller
     public function login(Request $request)
     {
         $loginUserData = $request->validate([
-            'phone_number' => 'required',
+            'phone' => 'required',
             'password' => 'required|min:6'
         ]);
 
         // Try to find the user in the User model
-        $user = User::where('phone_number', $loginUserData['phone_number'])->first();
+        $user = User::where('phone', $loginUserData['phone'])->first();
 
         if ($user && Hash::check($loginUserData['password'], $user->password)) {
 
@@ -142,7 +140,7 @@ class UserAuthController extends Controller
                 // Generate a new verification code and send SMS
                 $verificationData = $this->sms_service->setVerificationCode($user->id);
                 $message = $this->sms_service->getSMSVerifyMessageByAppName($verificationData->code);
-                $this->moraGateway->sendSms($user->phone_number, $message);
+                $this->moraGateway->sendSms($user->phone, $message);
 
                 return response()->json([
                     'message' => "Your account is not verified. A verification code has been sent to your phone number.",
@@ -160,7 +158,7 @@ class UserAuthController extends Controller
         }
 
         // If user not found, try Captain model
-        $captain = Captain::where('phone_number', $loginUserData['phone_number'])->first();
+        $captain = Captain::where('phone', $loginUserData['phone'])->first();
 
         if ($captain && Hash::check($loginUserData['password'], $captain->password)) {
             // If captain found and password is correct
@@ -233,21 +231,22 @@ class UserAuthController extends Controller
 
     public function forgetPassword(Request $request)
     {
-        $user = User::where('phone_number', $request->phone_number)->first();
+        $user = User::where('phone', $request->phone)->first();
         if (!$user) {
-            return ApiResponse::sendResponse(200, 'this phone_number not exist');
+            return ApiResponse::sendResponse(200, 'this phone not exist');
         }
 
         // Generate the verification code and SMS
         $verificationData = $this->sms_service->setVerificationCode($user->id);
         $message = $this->sms_service->getSMSVerifyMessageByAppName($verificationData->code);
-        $smsSent = $this->moraGateway->sendSms($user->phone_number, $message);
+        $smsSent = $this->moraGateway->sendSms($user->phone, $message);
 
-//        $smsSent = true;
+        //        $smsSent = true;
 
         if ($smsSent) {
+            // return $smsSent['data']['message'];
             return response()->json([
-                'message' => 'تم اراسل كود التحقق الخاص بك',
+                'message' => 'تم اراسل كود التحقق الخاص بك'. $smsSent['data']['message'],
                 'verification_required' => true,
                 'user_id' => $user->id,  // Send back user id for further verification process
             ]);
@@ -256,16 +255,16 @@ class UserAuthController extends Controller
                 'message' => 'Failed to send verification SMS. Please try again.',
             ], 500);
         }
-//        $uuid = Str::uuid()->toString();
-//        $code = Str::random(6); // Generates a random 6-character string
-//
-//        ForgetPassword::create([
-//            'uuid' => $uuid,
-//            'user_id' => $user->id,
-//            'code' => $code,
-//        ]);
+        //        $uuid = Str::uuid()->toString();
+        //        $code = Str::random(6); // Generates a random 6-character string
+        //
+        //        ForgetPassword::create([
+        //            'uuid' => $uuid,
+        //            'user_id' => $user->id,
+        //            'code' => $code,
+        //        ]);
 
-//        return ApiResponse::sendResponse(200, 'Reset code sent to your phone_number.', $code);
+        //        return ApiResponse::sendResponse(200, 'Reset code sent to your phone.', $code);
     }
 
     public function resetPassword(Request $request)
@@ -316,5 +315,4 @@ class UserAuthController extends Controller
     {
         return Password::broker(config('fortify.passwords'));
     }
-
 }
