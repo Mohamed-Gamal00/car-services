@@ -38,6 +38,12 @@ class PackageFeature extends Model
         return asset('storage/' . $this->icon);
     }
 
+    public function getCurrentNameAttribute()
+    {
+        $locale = app()->getLocale();
+        return ($locale === 'en' && $this->feature_en) ? $this->feature_en : $this->feature;
+    }
+
     // Scopes
     public function scopeOrdered($query)
     {

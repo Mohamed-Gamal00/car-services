@@ -22,7 +22,7 @@ class ServicesController extends Controller
     public function getServices()
     {
 
-        $services = Service::where('status', 'active')->get();
+        $services = Service::where('is_active', 1)->get();
 
         if (count($services) > 0) {
             return ApiResponse::sendResponse(200, ' services Retrieved Successfully', ViewServiceResource::collection($services));

@@ -59,7 +59,7 @@ class Car extends Model
         return app()->getLocale() === 'ar' ? $this->model_ar : $this->model_en;
     }
 
-    public function getFullNameAttribute()
+    public function getCurrentNameAttribute()
     {
         return trim($this->brand . ' ' . $this->model . ' ' . $this->year);
     }

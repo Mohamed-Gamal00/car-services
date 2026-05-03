@@ -16,7 +16,7 @@ class ViewPackageResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'name' => $this->getCurrentNameLangAttribute(),
+            'name' => $this->getCurrentNameAttribute(),
             'description' => translateWithHTMLTags($this->description),
             'icon' => $this->IconUrl,
             'wash_count' => $this->wash_count,
@@ -27,7 +27,7 @@ class ViewPackageResource extends JsonResource
             'package-features' => $this->features->map(function ($feature) {
                 return [
                     'id' => $feature->id,
-                    'title' => $feature->getCurrentNameLangAttribute(),
+                    'title' => $feature->getCurrentNameAttribute(),
                 ];
             }),
         ];

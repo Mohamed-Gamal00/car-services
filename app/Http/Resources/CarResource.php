@@ -16,7 +16,7 @@ class CarResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'name' => $this->getCurrentNameLangAttribute(),
+            'name' => $this->getCurrentNameAttribute(),
         ];
     }
 }
