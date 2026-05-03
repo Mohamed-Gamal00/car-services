@@ -39,6 +39,12 @@ class DiscountCode extends Model
         return $this->belongsToMany(Service::class, 'discount_code_services');
     }
 
+    // Alias for backward compatibility
+    public function products()
+    {
+        return $this->services();
+    }
+
     public function users()
     {
         return $this->belongsToMany(User::class, 'user_discount_codes')

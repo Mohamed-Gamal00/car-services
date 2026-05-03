@@ -35,11 +35,17 @@ class DiscountRepository implements Discount_codesInterface
     return $discountCode->wasChanged();
   }
 
-  /* new */
-  public function syncProducts($discountCodeId, array $productIds)
+  /* Sync services with discount code */
+  public function syncServices($discountCodeId, array $serviceIds)
   {
     $discountCode = $this->discount_code->findOrFail($discountCodeId);
-    $discountCode->products()->sync($productIds);
+    $discountCode->services()->sync($serviceIds);
+  }
+
+  /* Alias for backward compatibility */
+  public function syncProducts($discountCodeId, array $productIds)
+  {
+    return $this->syncServices($discountCodeId, $productIds);
   }
 
   public function delete($id)

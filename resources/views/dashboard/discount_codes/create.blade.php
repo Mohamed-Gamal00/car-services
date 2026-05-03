@@ -72,12 +72,12 @@
                         <div class="row mb-3">
                             <label class="col-sm-2 col-form-label fw-bold">الخدمات</label>
                             <div class="col-sm-10">
-                                <select name="product_ids[]" class="form-select product-select" aria-label="الخدمات"
+                                <select name="service_ids[]" class="form-select service-select" aria-label="الخدمات"
                                         multiple>
                                     <option value="" disabled>اختر الخدمات (أو اتركه فارغًا لجميع الخدمات)</option>
                                 </select>
 
-                                @error('product_ids')
+                                @error('service_ids')
                                 <span class="error">{{ $message }}</span>
                                 @enderror
                             </div>
@@ -112,9 +112,9 @@
 
     <script>
         $(document).ready(function () {
-            $('.product-select').select2({
+            $('.service-select').select2({
                 ajax: {
-                    url: '{{ route('search.products') }}', // Your API endpoint
+                    url: '{{ route('search.services') }}', // Your API endpoint
                     dataType: 'json',
                     delay: 250,
                     data: function (params) {
@@ -130,7 +130,7 @@
                     cache: true
                 },
                 minimumInputLength: 0, // Minimum characters to start the search
-                placeholder: 'اختار الخمدمة التي سيطبق عليها الخصم',
+                placeholder: 'اختر الخدمة التي سيطبق عليها الخصم',
             });
         });
     </script>

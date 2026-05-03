@@ -41,7 +41,7 @@ class DiscountCodeController extends Controller
     }
 
 
-    public function searchProducts(Request $request)
+    public function searchServices(Request $request)
     {
         $search = $request->input('q'); // Get the search term
 
@@ -66,20 +66,16 @@ class DiscountCodeController extends Controller
     {
         Gate::authorize('discount_code.create');
         $validatedData = $request->validated();
-        // $productIds = $validatedData['product_ids'];
-        // Check if 'product_ids' is present in the request
-        $productIds = $request->has('product_ids') ? $validatedData['product_ids'] : [];
-        unset($validatedData['product_ids']);
+        
+        // Check if 'service_ids' is present in the request
+        $serviceIds = $request->has('service_ids') ? $validatedData['service_ids'] : [];
+        unset($validatedData['service_ids']);
 
-        // dd($request->all());
         $discountCode = $this->discountRepository->store($validatedData);
-        // Attach the selected products to the discount code
-        if ($discountCode) {
-            if (!empty($productIds)) {
-                $discountCode->products()->sync($productIds);
-            } else {
-                // If no products are selected, apply the discount to all products
-            }
+        
+        // Attach the selected services to the discount code
+        if ($discountCode && !empty($serviceIds)) {
+            $discountCode->services()->sync($serviceIds);
         }
 
         return to_route('discount_code.index')->with('success', __('messages.DISCOUNT_CODE_CREATED'));
@@ -97,9 +93,8 @@ class DiscountCodeController extends Controller
         $services = Service::select('id', 'name')->latest()->take(10)->get();
         $discountCode = DiscountCode::findOrFail($id);
 
-        // Decode the product_ids and ensure it returns an array
-        $discountServicesIds = $discountCode->products->pluck('id')->toArray();
-        // dd($discountServicesIds);
+        // Get the service IDs associated with this discount code
+        $discountServicesIds = $discountCode->services->pluck('id')->toArray();
 
         return view('dashboard.discount_codes.edit', compact('discountCode', 'services', 'discountServicesIds'));
     }
@@ -111,21 +106,19 @@ class DiscountCodeController extends Controller
         // Validate the request data
         $data = $request->validated();
 
-        // Extract and remove product_ids from the validated data
-        $productIds = $data['product_ids'] ?? [];
-        unset($data['product_ids']);
+        // Extract and remove service_ids from the validated data
+        $serviceIds = $data['service_ids'] ?? [];
+        unset($data['service_ids']);
 
         // Update the discount code
         $wasChanged = $this->discountRepository->update($data, $id);
 
-        $this->discountRepository->syncProducts($id, $productIds);
-
-        // Update the product associations if there are any product_ids provided
-        if (!empty($productIds)) {
-            $this->discountRepository->syncProducts($id, $productIds);
+        // Update the service associations
+        if (!empty($serviceIds)) {
+            $this->discountRepository->syncServices($id, $serviceIds);
         }
 
-        if ($wasChanged || !empty($productIds)) {
+        if ($wasChanged || !empty($serviceIds)) {
             return to_route('discount_code.index')->with('success', __('messages.DISCOUNT_CODE_UPDATED'));
         }
 

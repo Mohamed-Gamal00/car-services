@@ -112,7 +112,7 @@ Route::group(['prefix' => 'dashboard', 'middleware' => 'admin'], function () {
 
     //-----------------------------------------------------------------------------/ Discount Codes
     Route::resource('/discount_code', DiscountCodeController::class);
-    Route::get('/api/search-services', [DiscountCodeController::class, 'searchProducts'])->name('search.products');
+    Route::get('/api/search-services', [DiscountCodeController::class, 'searchServices'])->name('search.services');
 
     //-----------------------------------------------------------------------------/ Admins Management
     Route::put('/admins/{id}/update_password', [AdminsController::class, 'ChangePassword'])->name('admins.update_password');
