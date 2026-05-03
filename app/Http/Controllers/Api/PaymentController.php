@@ -208,14 +208,9 @@ class PaymentController extends Controller
         if ($payment['status'] === 'paid') {
 
             $existingPayment = Payment::where('payment_id', $payment['id'])->first();
-            if ($existingPayment) {
+            if ($existingPayment && $existingPayment->status === 'paid') {
                 return ApiResponse::sendResponse(200, __('messages.PaidPayment'));
             }
-
-            Log::info('existingPayment', [
-                'existingPayment' => $existingPayment,
-            ]);
-
 
             $userPackage = UserPackage::where('reference', $reference)
                 ->where('status', 'inactive')
@@ -230,7 +225,7 @@ class PaymentController extends Controller
             $userPackage->update([
                 'status' => 'active',
                 'start_date' => now(),
-                'expiry_date' => now()->addDays($package->validity_in_days),
+                'expiry_date' => now()->addDays($package->validity_days),
             ]);
 
             $paymentData = [
@@ -246,10 +241,21 @@ class PaymentController extends Controller
                 'description' => $payment['description'] ?? null,
             ];
 
-            $this->paymentService->processPayment($paymentData);
+            $result = $this->paymentService->processPayment($paymentData);
+            
+            if ($result === 'already_paid') {
+                return ApiResponse::sendResponse(200, __('messages.PaidPayment'));
+            }
+            
             return ApiResponse::sendResponse(200, 'success');
 
         } elseif ($payment['status'] === 'failed') {
+            // Update user package status to failed if payment failed
+            $userPackage = UserPackage::where('reference', $reference)->first();
+            if ($userPackage) {
+                $userPackage->update(['status' => 'payment_failed']);
+            }
+            
             return ApiResponse::sendResponse(400, 'faild');
         }
 
@@ -309,7 +315,7 @@ class PaymentController extends Controller
         if ($payment['status'] === 'paid') {
 
             $existingPayment = Payment::where('payment_id', $payment['id'])->first();
-            if ($existingPayment) {
+            if ($existingPayment && $existingPayment->status === 'paid') {
                 return ApiResponse::sendResponse(200, __('messages.PaidPayment'));
             }
 
@@ -318,7 +324,6 @@ class PaymentController extends Controller
                 ->first();
 
             if (!$userPackage) {
-//                return ApiResponse::sendResponse(200, __('general.package_not_found_or_already_active'));
                 return redirect()->route('user.renewal_payment_package', [
                     'package_id' => $package->id,
                     'method' => $payment['source']['type'] ?? 'unknown'])->with('danger', __('general.package_not_found_or_already_active'));
@@ -336,7 +341,7 @@ class PaymentController extends Controller
             $userPackage->update([
                 'status' => 'active',
                 'start_date' => now(),
-                'expiry_date' => now()->addDays($package->validity_in_days),
+                'expiry_date' => now()->addDays($package->validity_days),
             ]);
 
             $paymentData = [
@@ -352,10 +357,21 @@ class PaymentController extends Controller
                 'description' => $payment['description'] ?? null,
             ];
 
-            $this->paymentService->processPayment($paymentData);
+            $result = $this->paymentService->processPayment($paymentData);
+            
+            if ($result === 'already_paid') {
+                return ApiResponse::sendResponse(200, __('messages.PaidPayment'));
+            }
+            
             return ApiResponse::sendResponse(200, 'success');
 
         } elseif ($payment['status'] === 'failed') {
+            // Update user package status to failed if payment failed
+            $userPackage = UserPackage::where('reference', $reference)->first();
+            if ($userPackage) {
+                $userPackage->update(['status' => 'payment_failed']);
+            }
+            
             return ApiResponse::sendResponse(400, 'faild');
         }
 

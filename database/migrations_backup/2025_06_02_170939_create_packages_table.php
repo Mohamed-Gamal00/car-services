@@ -17,7 +17,7 @@ return new class extends Migration {
             $table->text('description')->nullable();
             $table->integer('wash_count');
             $table->decimal('price', 8, 2);
-            $table->integer('validity_in_days');
+            $table->integer('validity_days');
             $table->boolean('is_active')->default(true)->nullable();
             $table->string('image')->nullable();
             $table->string('icon')->nullable();

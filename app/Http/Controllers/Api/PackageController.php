@@ -65,7 +65,7 @@ class PackageController extends Controller
             'package_id' => $package->id,
             'remaining_washes' => $package->wash_count,
             'start_date' => now(),
-            'expiry_date' => now()->addDays($package->validity_in_days),
+            'expiry_date' => now()->addDays($package->validity_days),
             'status' => 'inactive',
             'reference' => $reference,
         ]);
@@ -111,7 +111,7 @@ class PackageController extends Controller
             'package_id' => $package->id,
             'remaining_washes' => $package->wash_count,
             'start_date' => now(), // سيتم التحديث بعد الدفع
-            'expiry_date' => now()->addDays($package->validity_in_days), // سيتم التحديث بعد الدفع
+            'expiry_date' => now()->addDays($package->validity_days), // سيتم التحديث بعد الدفع
             'status' => 'inactive',
             'reference' => $reference,
         ]);

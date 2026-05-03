@@ -22,7 +22,7 @@ class ViewPackageResource extends JsonResource
             'wash_count' => $this->wash_count,
             'price' => $this->price,
             'image' => $this->image_url,
-            'validity_in_days' => $this->validity_in_days,
+            'validity_in_days' => $this->validity_days,
             'is_active' => $this->is_active=='1' ? 'active' : 'not active',
             'package-features' => $this->features->map(function ($feature) {
                 return [

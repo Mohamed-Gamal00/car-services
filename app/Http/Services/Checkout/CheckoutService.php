@@ -139,11 +139,9 @@ class CheckoutService
                 $data = ['order_id' => $order->id];
                 $this->notifyByFirebase(__('general.new_notification'), __('general.There_is_a_new_request_for_you'), $tokens, $data);
                 Log::info('Notification Sent to Firebase', ['tokens' => $tokens, 'data' => $data]);
-
             } else {
                 Log::error('No device tokens for captain', ['captain_id' => $captain->id]);
             }
-
         }
 
         if ($request->has('choices')) {
@@ -165,7 +163,6 @@ class CheckoutService
 
     public function sendNotificationToAdmin($order)
     {
-//                $admins = Admin::all();
 
         $admins = Admin::whereNotIn('id', [13, 14, 15])->get();
 
@@ -182,7 +179,6 @@ class CheckoutService
             } catch (\Exception $e) {
             }
         }
-
     }
 
     public function createOrderFromService($request, $service_id, $user)
@@ -263,5 +259,4 @@ class CheckoutService
 
         return $order;
     }
-
 }

@@ -85,7 +85,7 @@
                                     صلاحية الباقة
                                     بالايام</label>
                                 <div class="col-sm-10">
-                                    <x-form.input type="text" placeholder="" name="validity_in_days"
+                                    <x-form.input type="text" placeholder="" name="validity_days"
                                                   value="{{ $package->validity_days  }}"/>
                                 </div>
                             </div>

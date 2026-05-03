@@ -68,7 +68,7 @@
                         <p class="card-text">عدد مرات الغسيل : {{$package->wash_count}}
                         </p>
 
-                        <p class="card-text">الصلاحية : {{$package->validity_in_days}} يوم
+                        <p class="card-text">الصلاحية : {{$package->validity_days}} يوم
                         </p>
 
                         <p class="card-text">السعر : {{$package->price}} ريال

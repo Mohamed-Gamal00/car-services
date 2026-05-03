@@ -87,7 +87,7 @@ class OrderResource extends JsonResource
             'name' => $package->getCurrentNameLangAttribute(),
             'price' => $package->price,
             'wash_count' => $package->wash_count,
-            'validity_in_days' => $package->validity_in_days,
+            'validity_in_days' => $package->validity_days,
             'description' => $package->description,
             'image' => $package->image_url,
             'icon' => $package->icon_url,

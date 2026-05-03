@@ -58,7 +58,7 @@ Route::group(['prefix' => 'dashboard', 'middleware' => 'admin'], function () {
     //-----------------------------------------------------------------------------/ Admin Profile
     Route::get('/profile', [ProfileController::class, 'index'])->name('profile.index');
     Route::put('/profile/{id}/update', [ProfileController::class, 'update'])->name('profile.update');
-    
+
     Route::get('/profile/edit', [ProfileSettingsController::class, 'index'])->name('profile.settings.index');
     Route::put('/profile/update', [ProfileSettingsController::class, 'changePassword'])->name('profile.settings.update');
 
@@ -152,5 +152,4 @@ Route::group(['prefix' => 'dashboard', 'middleware' => 'admin'], function () {
     Route::get('/orders/export', [ReportsController::class, 'exportOrders'])->name('orders.export');
     Route::get('/coupons/export', [ReportsController::class, 'exportCoupons'])->name('coupons.export');
     Route::get('/payments/export', [ReportsController::class, 'exportPayments'])->name('payments.export');
-
 });

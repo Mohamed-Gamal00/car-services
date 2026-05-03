@@ -66,8 +66,8 @@
                             <label for="example-text-input" class="col-sm-2 col-form-label fw-bold">صلاحية الباقة
                                 بالايام</label>
                             <div class="col-sm-10">
-                                <x-form.input type="text" placeholder="" name="validity_in_days"
-                                              value="{{ old('validity_in_days') }}"/>
+                                <x-form.input type="text" placeholder="" name="validity_days"
+                                              value="{{ old('validity_days') }}"/>
                             </div>
                         </div>
 

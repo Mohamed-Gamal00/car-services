@@ -68,7 +68,7 @@
 
                         <li class="feed-item">
                             <div class="feed-item-list">
-                                <span class="date fw-bold">وقت الخدمة/الصلاحية : {{$order->products->first()->duration ?? $order->userPackage->package->validity_in_days ?? 'غير محدد' . 'يوم' }}</span>
+                                <span class="date fw-bold">وقت الخدمة/الصلاحية : {{$order->products->first()->duration ?? $order->userPackage->package->validity_days ?? 'غير محدد' . 'يوم' }}</span>
                             </div>
                         </li>
 

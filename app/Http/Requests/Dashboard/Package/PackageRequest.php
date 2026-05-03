@@ -27,7 +27,7 @@ class PackageRequest extends FormRequest
             'name_en' => ['nullable', 'string', 'max:255'],
             'price' => ['required', 'numeric'],
             'wash_count' => ['required', 'numeric'],
-            'validity_in_days' => ['required', 'numeric'],
+            'validity_days' => ['required', 'numeric'],
             'icon' => ['nullable', 'image'],
             'duration' => ['required', 'string'],
             'image' => ['nullable', 'image'],
