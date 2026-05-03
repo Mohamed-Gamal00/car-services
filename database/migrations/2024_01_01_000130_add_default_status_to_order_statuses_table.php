@@ -12,7 +12,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('order_statuses', function (Blueprint $table) {
-            $table->boolean('default_status')->default(false)->after('is_active');
+            if (!Schema::hasColumn('order_statuses', 'default_status')) {
+                $table->boolean('default_status')->default(false)->after('is_active');
+            }
         });
     }
 
