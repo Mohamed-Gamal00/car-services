@@ -40,26 +40,10 @@
                         </div>
 
                         <div class="row mb-3 mt-3">
-                            <label for="example-text-input" class="col-sm-2 col-form-label fw-bold">الاسم
-                                الاخير</label>
-                            <div class="col-sm-10">
-                                <x-form.input type="text" value="{{$captain->last_name}}" name="last_name"/>
-                            </div>
-                        </div>
-
-                        {{--                        <div class="row mb-3 mt-3">--}}
-                        {{--                            <label for="example-text-input" class="col-sm-2 col-form-label fw-bold">البريد--}}
-                        {{--                                الالكتروني</label>--}}
-                        {{--                            <div class="col-sm-10">--}}
-                        {{--                                <x-form.input type="email" value="{{$captain->email}}" name="email"/>--}}
-                        {{--                            </div>--}}
-                        {{--                        </div>--}}
-
-                        <div class="row mb-3 mt-3">
                             <label for="example-text-input" class="col-sm-2 col-form-label fw-bold">رقم
                                 الجوال</label>
                             <div class="col-sm-10">
-                                <x-form.input type="number" value="{{$captain->phone_number}}" name="phone_number"/>
+                                <x-form.input type="number" value="{{$captain->phone}}" name="phone"/>
                             </div>
                         </div>
 

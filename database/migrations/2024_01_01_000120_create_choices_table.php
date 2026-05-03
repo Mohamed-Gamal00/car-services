@@ -17,7 +17,6 @@ return new class extends Migration
             $table->string('name_en')->nullable(); // English name
             $table->string('image')->nullable();
             $table->decimal('service_price', 10, 2)->default(0); // Additional service price
-            $table->foreignId('parent_id')->nullable()->constrained('choices')->onDelete('cascade');
             $table->timestamps();
         });
 

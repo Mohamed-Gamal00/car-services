@@ -25,6 +25,7 @@ use App\Http\Controllers\Dashboard\CaptainController;
 use App\Http\Controllers\Dashboard\ServicesController;
 use App\Http\Controllers\Dashboard\CarsController;
 use App\Http\Controllers\Dashboard\PaymentController;
+use App\Http\Controllers\Dashboard\ProductsController;
 use Illuminate\Support\Facades\Route;
 
 //=============================================== Dashboard Routes
@@ -66,6 +67,7 @@ Route::group(['prefix' => 'dashboard', 'middleware' => 'admin'], function () {
     Route::put('/services/{id}/restore', [ServicesController::class, 'restore'])->name('services.restore');
     Route::delete('/services/{id}/force-delete', [ServicesController::class, 'forceDelete'])->name('services.force-delete');
     Route::resource('/services', ServicesController::class);
+
 
     //-----------------------------------------------------------------------------/ Packages Management
     Route::resource('/packages', PackageController::class);

@@ -55,11 +55,7 @@ Route::middleware(['changeLanguage'])->group(function () {
 
         #----------------------------------------------------------------------------------- User Addresses
         Route::get('user-addresses', [UserAddressesController::class, 'getAllAddresses']);
-//        Route::get('user-country-cities', [UserAddressesController::class, 'getUserCities']);
-//        Route::post('create-address', [UserAddressesController::class, 'createAddress']);
-//        Route::post('update-address/{id}', [UserAddressesController::class, 'updateAddress']);
         Route::post('delete-address/{id}', [UserAddressesController::class, 'deleteAddress']);
-//        Route::post('main-address/{id}', [UserAddressesController::class, 'setMainAddress']);
 
         #-------------------------------------- Checkout --------------------------------------------
 //        Route::post('/checkout/{service_id}', [CheckoutController::class, 'usercheckout']);
@@ -120,12 +116,7 @@ Route::middleware(['changeLanguage'])->group(function () {
     ################################## Get All Top Products(services) #########################################
     Route::get('get-services', [ServicesController::class, 'getServices']);
     Route::get('get-services/{service_id}', [ServicesController::class, 'getService_id']);
-//    Route::get('get-services-times/{service_id}', [ServicesController::class, 'getServiceTimes']);
-//    Route::get('get-specific-services-times/{service_id}', [ServicesController::class, 'getSpecificServiceTimes']);
     Route::get('get-specific-services-times/{service_id?}', [ServicesController::class, 'getSpecificServiceTimes']);
-
-//    Route::get('check-service-time/{service_id}/{time}', [ServicesController::class, 'checkTimeReserved']);
-//    Route::get('check-service-time/{service_id}/{time}', [ServicesController::class, 'checkTimeReserved']);
 
 
     ################################## packages #########################################

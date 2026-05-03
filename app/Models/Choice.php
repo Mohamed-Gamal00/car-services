@@ -27,15 +27,6 @@ class Choice extends Model
         return $this->name_en;
     }
 
-    public function products()
-    {
-        return $this->belongsToMany(Product::class, 'choices_products', 'choice_id', 'product_id');
-    }
-
-    public function orderItems()
-    {
-        return $this->belongsToMany(OrderItem::class, 'choice_order_item', 'choice_id', 'order_item_id');
-    }
 
     public function order()
     {

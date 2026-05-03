@@ -37,7 +37,6 @@ class CaptainController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255',
-            'last_name' => 'required|string|max:255',
             'phone' => [
                 'required',
                 'unique:captains',
@@ -50,9 +49,8 @@ class CaptainController extends Controller
 
         $user = Captain::create([
             'name' => $request->name,
-            'last_name' => $request->last_name,
             'email' => $request->email,
-            'phone_number' => $request->phone_number,
+            'phone' => $request->phone,
             'password' => Hash::make($request->password)
         ]);
         $token = $user->createToken('API Token')->plainTextToken;
@@ -73,12 +71,11 @@ class CaptainController extends Controller
             ->with('products', 'orderStatus', 'choices')
             ->where('captain_id', $captain->id)
             ->where('order_status_id', 4)
-            ->where('return_order', false)
             ->paginate(10);
 
-        $current_order = $captain->orders()->where('order_status_id', '!=', 4)->where('return_order', false)->first();
+        $current_order = $captain->orders()->where('order_status_id', '!=', 4)->first();
 
-        $wating_list = $captain->orders()->where('order_status_id', '!=', 4)->where('return_order', false)->paginate(10);
+        $wating_list = $captain->orders()->where('order_status_id', '!=', 4)->paginate(10);
 
 //        dd($current_order);
         return view('dashboard.captains.show', compact('captain', 'completed_orders', 'current_order', 'wating_list'));
@@ -137,7 +134,6 @@ class CaptainController extends Controller
             ->with('products', 'orderStatus', 'choices', 'rating')
             ->where('captain_id', $captain->id)
             ->where('order_status_id', 4)
-            ->where('return_order', false)
             ->paginate(5);
 //        dd($captain->ratings);
         return view('dashboard.captains.rating', compact('captain', 'completed_orders'));

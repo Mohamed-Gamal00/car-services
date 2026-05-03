@@ -46,7 +46,7 @@
                                 <tr data-id="5">
 
                                     <td data-field="name">{{ $captain->name . ' ' . $captain->last_name }}</td>
-                                    <td data-field="phone_number">{{$captain->phone_number }}</td>
+                                    <td data-field="phone">{{$captain->phone }}</td>
                                     <td data-field="phone_number">{{$captain->status == 'available' ? 'متاح' : 'مشغول' }}</td>
                                     <td data-field="phone_number">{{$captain->is_active == 0 ?'غير نشط' : 'نشط' }}</td>
                                     {{--                                    <td data-field="email">{{ $captain->email }}</td>--}}

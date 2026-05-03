@@ -30,17 +30,6 @@
                         </div>
 
                         <div class="row mb-3">
-                            <label for="example-text-input" class="col-sm-2 col-form-label">الاسم الاخير</label>
-                            <div class="col-sm-10">
-                                <input class="form-control" name="last_name" type="text" id="example-text-input"
-                                       value="">
-                                @error('last_name')
-                                <span class="error">{{ $message }}</span>
-                                @enderror
-                            </div>
-                        </div>
-
-                        <div class="row mb-3">
                             <label for="example-text-input" class="col-sm-2 col-form-label">رقم الجوال
                             </label>
                             <div class="col-sm-10">

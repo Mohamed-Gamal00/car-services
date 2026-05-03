@@ -23,10 +23,9 @@ class CaptainRequest extends FormRequest
     {
         $rules = [
             'name' => 'required|string|max:255',
-            'last_name' => 'required|string|max:255',
             'is_active' => 'nullable|boolean',
             'status' => 'nullable|in:available,busy',
-            'phone_number' => [
+            'phone' => [
                 'required',
                 'regex:/^05\d{8}$/',
             ],];
