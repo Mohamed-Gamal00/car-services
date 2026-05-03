@@ -10,8 +10,10 @@ class Car extends Model
     use HasFactory;
 
     protected $fillable = [
-        'brand',
-        'model',
+        'brand_ar',
+        'brand_en',
+        'model_ar',
+        'model_en',
         'year',
         'color',
         'is_active',
@@ -42,10 +44,21 @@ class Car extends Model
 
     public function scopeByBrand($query, $brand)
     {
-        return $query->where('brand', $brand);
+        return $query->where('brand_ar', $brand)
+            ->orWhere('brand_en', $brand);
     }
 
     // Helper methods
+    public function getBrandAttribute()
+    {
+        return app()->getLocale() === 'ar' ? $this->brand_ar : $this->brand_en;
+    }
+
+    public function getModelAttribute()
+    {
+        return app()->getLocale() === 'ar' ? $this->model_ar : $this->model_en;
+    }
+
     public function getFullNameAttribute()
     {
         return trim($this->brand . ' ' . $this->model . ' ' . $this->year);

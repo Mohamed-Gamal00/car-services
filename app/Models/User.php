@@ -100,4 +100,25 @@ class User extends Authenticatable
             ->where('remaining_washes', '>', 0)
             ->first();
     }
+
+    public function scopeFilter($query, $filters)
+    {
+        if (isset($filters['name'])) {
+            $query->where('name', 'like', '%' . $filters['name'] . '%');
+        }
+
+        if (isset($filters['email'])) {
+            $query->where('email', 'like', '%' . $filters['email'] . '%');
+        }
+
+        if (isset($filters['phone'])) {
+            $query->where('phone', 'like', '%' . $filters['phone'] . '%');
+        }
+
+        if (isset($filters['status'])) {
+            $query->where('status', $filters['status']);
+        }
+
+        return $query;
+    }
 }

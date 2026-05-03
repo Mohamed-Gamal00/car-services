@@ -3,16 +3,15 @@
 namespace App\Http\Controllers\Dashboard;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Dashboard\CarRequest;
 use App\Models\Car;
-use App\Models\City;
 use App\Repositories\Car\CarRepository;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 
 class CarsController extends Controller
 {
-
-    protected $carRepository;
+    protected CarRepository $carRepository;
 
     public function __construct(CarRepository $carRepository)
     {
@@ -41,18 +40,16 @@ class CarsController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(CarRequest $request)
     {
-        // Validate the request data
-        $validated = $request->validate([
-            'name_ar' => 'required|string|max:255|unique:cars,name_ar',
-            'name_en' => 'nullable|string|max:255|unique:cars,name_en',
-        ]);
+        Gate::authorize('car.create');
+
+        $validated = $request->validated();
+        $validated['is_active'] = $request->has('is_active') ? 1 : 0;
 
         $this->carRepository->store($validated);
 
-        // Redirect back with a success message
-        return redirect()->route('cars.index')->with('success', 'تم الاضافة بنجاح');
+        return redirect()->route('cars.index')->with('success', 'تم إضافة السيارة بنجاح');
     }
 
     /**
@@ -60,15 +57,17 @@ class CarsController extends Controller
      */
     public function show(string $id)
     {
-        //
+        Gate::authorize('car.view');
+        $car = $this->carRepository->getById($id);
+        return view('dashboard.cars.show', compact('car'));
     }
 
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit($id)
+    public function edit(string $id)
     {
-        Gate::authorize('edit.view');
+        Gate::authorize('car.edit');
         $car = $this->carRepository->getById($id);
         return view('dashboard.cars.edit', compact('car'));
     }
@@ -76,21 +75,16 @@ class CarsController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, $id)
+    public function update(CarRequest $request, string $id)
     {
-        $car = Car::findOrFail($id);
+        Gate::authorize('car.edit');
 
-        // Validate the request data
-        $validated = $request->validate([
-            'name_ar' => 'required|string|max:255|unique:cars,name_ar,' . $car->id,
-            'name_en' => 'nullable|string|max:255|unique:cars,name_en,' . $car->id,
-        ]);
+        $validated = $request->validated();
+        $validated['is_active'] = $request->has('is_active') ? 1 : 0;
 
-        // Update the city with the validated data
         $this->carRepository->update($validated, $id);
 
-        // Redirect back with a success message
-        return redirect()->route('cars.index')->with('success', 'تم تحديث البايانات');
+        return redirect()->route('cars.index')->with('success', 'تم تحديث بيانات السيارة بنجاح');
     }
 
     /**
@@ -98,8 +92,10 @@ class CarsController extends Controller
      */
     public function destroy(string $id)
     {
+        Gate::authorize('car.delete');
+        
         $this->carRepository->delete($id);
 
-        return redirect()->route('cars.index')->with('success', 'تم الحذف بنجاح');
+        return redirect()->route('cars.index')->with('success', 'تم حذف السيارة بنجاح');
     }
 }

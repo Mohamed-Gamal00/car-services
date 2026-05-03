@@ -1,69 +1,90 @@
 @extends('dashboard.index')
 
-@section('title', 'اضافة سيارة')
+@section('title', 'إضافة سيارة')
 
 @section('breadcrumb')
     @parent
     <li class="breadcrumb-item"><a href="{{ route('cars.index') }}">السيارات</a></li>
-    <li class="breadcrumb-item">اضافة سيارة</li>
+    <li class="breadcrumb-item">إضافة سيارة</li>
 @endsection
 
 @section('section')
-
     <div class="row">
         <div class="col-12">
             <div class="card">
                 <div class="card-body">
-                    {{-- Form Start --}}
-                    <form action="{{ route('cars.store') }}" method="post" enctype="multipart/form-data">
+                    <form action="{{ route('cars.store') }}" method="post">
                         @csrf
 
-                        <div class="col-sm-10">
-
-
-                            <div class="row mb-3 mt-3">
-                                <label for="example-text-input" class="col-sm-2 col-form-label fw-bold">اسم السيارة
-                                    بالعربي</label>
-                                <div class="col-sm-10">
-                                    <x-form.input type="text" name="name_ar" value="{{ old('name_ar') }}"/>
-                                </div>
+                        @if ($errors->any())
+                            <div class="alert alert-danger">
+                                <ul>
+                                    @foreach ($errors->all() as $error)
+                                        <li>{{ $error }}</li>
+                                    @endforeach
+                                </ul>
                             </div>
-                            <div class="row mb-3 mt-3">
-                                <label for="example-text-input" class="col-sm-2 col-form-label fw-bold">اسم السيارة
-                                    بالانجليزي</label>
-                                <div class="col-sm-10">
-                                    <x-form.input type="text" name="name_en" value="{{ old('name_en') }}"/>
-                                </div>
+                        @endif
+
+                        <div class="row mb-3">
+                            <label class="col-sm-2 col-form-label fw-bold">الماركة (عربي) <span class="text-danger">*</span></label>
+                            <div class="col-sm-10">
+                                <x-form.input type="text" name="brand_ar" :value="old('brand_ar')" placeholder="مثال: تويوتا"/>
                             </div>
                         </div>
 
+                        <div class="row mb-3">
+                            <label class="col-sm-2 col-form-label fw-bold">الماركة (English)</label>
+                            <div class="col-sm-10">
+                                <x-form.input type="text" name="brand_en" :value="old('brand_en')" placeholder="Example: Toyota"/>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <label class="col-sm-2 col-form-label fw-bold">الموديل (عربي) <span class="text-danger">*</span></label>
+                            <div class="col-sm-10">
+                                <x-form.input type="text" name="model_ar" :value="old('model_ar')" placeholder="مثال: كامري"/>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <label class="col-sm-2 col-form-label fw-bold">الموديل (English)</label>
+                            <div class="col-sm-10">
+                                <x-form.input type="text" name="model_en" :value="old('model_en')" placeholder="Example: Camry"/>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <label class="col-sm-2 col-form-label fw-bold">السنة</label>
+                            <div class="col-sm-10">
+                                <x-form.input type="text" name="year" :value="old('year')" placeholder="مثال: 2024"/>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <label class="col-sm-2 col-form-label fw-bold">اللون</label>
+                            <div class="col-sm-10">
+                                <x-form.input type="text" name="color" :value="old('color')" placeholder="مثال: أبيض"/>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <label class="col-sm-2 col-form-label fw-bold">الحالة</label>
+                            <div class="col-sm-10">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" name="is_active" id="is_active" value="1" checked>
+                                    <label class="form-check-label" for="is_active">نشط</label>
+                                </div>
+                            </div>
+                        </div>
 
                         <div>
                             <button class="btn btn-primary" type="submit">حفظ</button>
+                            <a href="{{ route('cars.index') }}" class="btn btn-secondary">إلغاء</a>
                         </div>
                     </form>
-
-
-                </div><!-- end cardbody -->
-            </div><!-- end card -->
-        </div> <!-- end col -->
+                </div>
+            </div>
+        </div>
     </div>
-
-    {{-- <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script>
-        document.getElementById('country').addEventListener('change', function () {
-            var selectedCountryId = this.value;
-            var cityCheckboxes = document.querySelectorAll('.city-checkbox');
-
-            cityCheckboxes.forEach(function (checkbox) {
-                var countryId = checkbox.getAttribute('data-country-id');
-                if (selectedCountryId === '' || countryId !== selectedCountryId) {
-                    checkbox.parentElement.parentElement.style.display = 'none';
-                } else {
-                    checkbox.parentElement.parentElement.style.display = 'block';
-                }
-            });
-        });
-    </script> --}}
-
 @endsection
