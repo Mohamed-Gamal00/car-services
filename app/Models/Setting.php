@@ -10,56 +10,25 @@ class Setting extends Model
     use HasFactory;
 
     protected $fillable = [
-        'key',
-        'value',
-        'type',
-        'group',
-        'description',
+        'website_name',
+        'website_name_en',
+        'address',
+        'address_en',
+        'subscription_title',
+        'subscription_title_en',
+        'email',
+        'phone_number',
+        'whatsaap',
+        'publishable_key',
+        'secret_key',
+        'sms_api_key',
+        'sms_user_name',
+        'sernder',
+        'working_strat_time',
+        'working_end_time',
+        'start_rest_time',
+        'end_rest_time',
+        'logo',
+        'image',
     ];
-
-    // Helper methods
-    public static function get($key, $default = null)
-    {
-        $setting = self::where('key', $key)->first();
-        
-        if (!$setting) {
-            return $default;
-        }
-        
-        return self::castValue($setting->value, $setting->type);
-    }
-
-    public static function set($key, $value, $type = 'string', $group = 'general')
-    {
-        return self::updateOrCreate(
-            ['key' => $key],
-            [
-                'value' => $value,
-                'type' => $type,
-                'group' => $group,
-            ]
-        );
-    }
-
-    protected static function castValue($value, $type)
-    {
-        switch ($type) {
-            case 'boolean':
-                return (bool) $value;
-            case 'integer':
-                return (int) $value;
-            case 'float':
-                return (float) $value;
-            case 'json':
-                return json_decode($value, true);
-            default:
-                return $value;
-        }
-    }
-
-    // Scopes
-    public function scopeByGroup($query, $group)
-    {
-        return $query->where('group', $group);
-    }
 }

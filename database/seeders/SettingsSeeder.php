@@ -9,104 +9,30 @@ class SettingsSeeder extends Seeder
 {
     public function run(): void
     {
-        $settings = [
-            // App Settings
+        Setting::updateOrCreate(
+            ['id' => 1],
             [
-                'key' => 'app_name',
-                'value' => 'Quick Clean',
-                'type' => 'string',
-                'group' => 'app',
-                'description' => 'Application name'
-            ],
-            [
-                'key' => 'app_name_ar',
-                'value' => 'كويك كلين',
-                'type' => 'string',
-                'group' => 'app',
-                'description' => 'Application name in Arabic'
-            ],
-            [
-                'key' => 'app_logo',
-                'value' => null,
-                'type' => 'string',
-                'group' => 'app',
-                'description' => 'Application logo path'
-            ],
-            
-            // Working Hours
-            [
-                'key' => 'working_hours_start',
-                'value' => '08:00',
-                'type' => 'string',
-                'group' => 'booking',
-                'description' => 'Working hours start time'
-            ],
-            [
-                'key' => 'working_hours_end',
-                'value' => '22:00',
-                'type' => 'string',
-                'group' => 'booking',
-                'description' => 'Working hours end time'
-            ],
-            [
-                'key' => 'advance_booking_minutes',
-                'value' => '30',
-                'type' => 'integer',
-                'group' => 'booking',
-                'description' => 'Minimum advance booking time in minutes'
-            ],
-            
-            // Payment Settings
-            [
-                'key' => 'currency',
-                'value' => 'SAR',
-                'type' => 'string',
-                'group' => 'payment',
-                'description' => 'Default currency'
-            ],
-            [
-                'key' => 'tax_rate',
-                'value' => '15',
-                'type' => 'integer',
-                'group' => 'payment',
-                'description' => 'Tax rate percentage'
-            ],
-            
-            // Notification Settings
-            [
-                'key' => 'firebase_server_key',
-                'value' => null,
-                'type' => 'string',
-                'group' => 'notifications',
-                'description' => 'Firebase server key for push notifications'
-            ],
-            
-            // Contact Information
-            [
-                'key' => 'contact_phone',
-                'value' => '+966500000000',
-                'type' => 'string',
-                'group' => 'contact',
-                'description' => 'Contact phone number'
-            ],
-            [
-                'key' => 'contact_email',
-                'value' => 'info@quickclean.com',
-                'type' => 'string',
-                'group' => 'contact',
-                'description' => 'Contact email address'
-            ],
-            [
-                'key' => 'contact_address',
-                'value' => 'الرياض، المملكة العربية السعودية',
-                'type' => 'string',
-                'group' => 'contact',
-                'description' => 'Contact address'
-            ],
-        ];
-
-        foreach ($settings as $setting) {
-            Setting::create($setting);
-        }
+                'website_name' => 'كويك كلين',
+                'website_name_en' => 'Quick Clean',
+                'address' => 'الرياض، المملكة العربية السعودية',
+                'address_en' => 'Riyadh, Saudi Arabia',
+                'subscription_title' => 'خدمات غسيل وتنظيف السيارات',
+                'subscription_title_en' => 'Car Wash and Cleaning Services',
+                'email' => 'info@quickclean.com',
+                'phone_number' => '966500000000',
+                'whatsaap' => '966500000000',
+                'publishable_key' => "pk_test_r6D1NBB77sSPEn2i3oPWjdsJGoxKL639KJC1qsvF",
+                'secret_key' => "sk_test_sGgkjPMTHcREvhh7yL74Xn6BkGPfk3P3A89DyYbn",
+                'sms_api_key' => null,
+                'sms_user_name' => null,
+                'sernder' => 'QuickClean',
+                'working_strat_time' => '08:00',
+                'working_end_time' => '22:00',
+                'start_rest_time' => '12:00',
+                'end_rest_time' => '13:00',
+                'logo' => null,
+                'image' => null,
+            ]
+        );
     }
 }

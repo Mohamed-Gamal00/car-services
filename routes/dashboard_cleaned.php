@@ -10,9 +10,11 @@ use App\Http\Controllers\Dashboard\CityController;
 use App\Http\Controllers\Dashboard\ClientsController;
 use App\Http\Controllers\Dashboard\CommonQuestionController;
 use App\Http\Controllers\Dashboard\CountriesController;
+use App\Http\Controllers\Dashboard\DesignsController;
 use App\Http\Controllers\Dashboard\OrderController;
 use App\Http\Controllers\Dashboard\PageController;
 use App\Http\Controllers\Dashboard\ReportsController;
+use App\Http\Controllers\Dashboard\RulesController;
 use App\Http\Controllers\Dashboard\SettingsController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Dashboard\ProfileController;
@@ -103,6 +105,9 @@ Route::group(['prefix' => 'dashboard', 'middleware' => 'admin'], function () {
     Route::get('/captains/{id}/rating', [CaptainController::class, 'rating'])->name('captain.rating');
     Route::resource('/captains', CaptainController::class);
 
+    //-----------------------------------------------------------------------------/ Designs/Banners Management
+    Route::resource('/designs', DesignsController::class);
+
     //-----------------------------------------------------------------------------/ Discount Codes
     Route::resource('/discount_code', DiscountCodeController::class);
     Route::get('/api/search-services', [DiscountCodeController::class, 'searchProducts'])->name('search.products');
@@ -110,6 +115,9 @@ Route::group(['prefix' => 'dashboard', 'middleware' => 'admin'], function () {
     //-----------------------------------------------------------------------------/ Admins Management
     Route::put('/admins/{id}/update_password', [AdminsController::class, 'ChangePassword'])->name('admins.update_password');
     Route::resource('/admins', AdminsController::class);
+
+    //-----------------------------------------------------------------------------/ Admin Groups/Rules Management
+    Route::resource('/rules', RulesController::class);
 
     //-----------------------------------------------------------------------------/ Cars (Brands & Models)
     Route::resource('/cars', CarsController::class);
