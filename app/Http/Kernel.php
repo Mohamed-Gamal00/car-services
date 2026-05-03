@@ -45,7 +45,6 @@ class Kernel extends HttpKernel
 
 
         'api' => [
-            \App\Http\Middleware\SetHeaderToken::class,
             \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
             \Illuminate\Routing\Middleware\ThrottleRequests::class . ':api',
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
@@ -72,8 +71,6 @@ class Kernel extends HttpKernel
         'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,
         'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
         'admin' => \App\Http\Middleware\Admin::class,
-        'api.customAuth' => \App\Http\Middleware\CheckTokenVerify::class,
-        'setHeaderToken' => \App\Http\Middleware\SetHeaderToken::class,
         'changeLanguage' => \App\Http\Middleware\ChangeLanguage::class,
         
         'user_verified' => \App\Http\Middleware\CheckUserVerification::class,

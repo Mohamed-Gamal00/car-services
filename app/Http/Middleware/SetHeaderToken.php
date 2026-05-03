@@ -15,10 +15,14 @@ class SetHeaderToken
      */
     public function handle(Request $request, Closure $next) // Middleware
     {
-        $token = $request->header('API-TOKEN');
+        // if ($request->hasHeader('API-TOKEN')) {
+        //     $token = $request->header('API-TOKEN');
+        //     $request->headers->set('Authorization', 'Bearer ' . $token);
+        // }
+
+                $token = $request->header('API-TOKEN');
 //        return $request->headers;
         $request->headers->set('Authorization', " Bearer $token");
-
         return $next($request);
     }
 }

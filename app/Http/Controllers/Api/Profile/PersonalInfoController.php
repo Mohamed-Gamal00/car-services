@@ -56,29 +56,34 @@ class PersonalInfoController extends Controller
     public function changeProfileImage(Request $request)
     {
         $request->validate([
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'image' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
         ]);
+
         $user = $request->user();
 
-        $oldImage = $user->image;
-        $newImage = $this->uploadedImage(request(), 'image', 'users');
+        // Get old image path
+        $oldImage = $user->avatar;
 
-        if ($newImage) {
-            $image = $newImage;
+        // Upload new image
+        $newImage = $this->uploadedImage($request, 'image', 'users');
+
+        if (!$newImage) {
+            return ApiResponse::sendResponse(400, 'Failed to upload image', []);
         }
 
-        if ($newImage && $oldImage) {
+        // Update user avatar
+        $user->update([
+            'avatar' => $newImage
+        ]);
+
+        // Delete old image if exists
+        if ($oldImage && Storage::disk('public')->exists($oldImage)) {
             Storage::disk('public')->delete($oldImage);
         }
 
-        if ($request->image) {
-            $user->update([
-                'image' => $image
-            ]);
-        }
-
         $data = [
-            'image' => $user->image_url
+            'avatar' => $user->avatar,
+            'avatar_url' => $user->avatar_url
         ];
 
         return ApiResponse::sendResponse(200, 'Profile Image Updated Successfully', $data);

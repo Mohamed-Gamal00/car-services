@@ -86,6 +86,12 @@ class User extends Authenticatable
         return asset('storage/' . $this->avatar);
     }
 
+    // Alias for avatar_url
+    public function getImageUrlAttribute()
+    {
+        return $this->avatar_url;
+    }
+
     // Scopes
     public function scopeActive($query)
     {

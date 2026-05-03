@@ -36,7 +36,7 @@ class CheckUserVerification
         if (!$user->verificationCode) {
             $verificationData = $this->sms_service->setVerificationCode($user->id);
             $message = $this->sms_service->getSMSVerifyMessageByAppName($verificationData->code);
-            $this->moraGateway->sendSms($user->phone_number, $message);
+            $this->moraGateway->sendSms($user->phone, $message);
             return response()->json([
                 'status' => "failed؛",
                 'message' => "Your account is not verified. A new verification code has been sent to your phone number.",
@@ -50,7 +50,7 @@ class CheckUserVerification
             $verificationData = $this->sms_service->setVerificationCode($user->id);
 //            return $verificationData;
             $message = $this->sms_service->getSMSVerifyMessageByAppName($verificationData->code);
-            $smsSent = $this->moraGateway->sendSms($user->phone_number, $message);
+            $smsSent = $this->moraGateway->sendSms($user->phone, $message);
 
 //            $smsSent = true;
 

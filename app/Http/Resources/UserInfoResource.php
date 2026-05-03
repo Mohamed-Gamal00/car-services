@@ -23,9 +23,8 @@ class UserInfoResource extends JsonResource
             'id' => $this->id,
             'is_client' => true,
             'profile_image' => $this->image_url ?? null,
-            'first_name' => $this->first_name,
-            'family_name' => $this->family_name,
-            'phone_number' => $this->phone_number,
+            'name' => $this->name,
+            'phone_number' => $this->phone,
             'package' => $this->getActivePackageData(),
             'Record_washes' => $this->getRecord_washes(),
 
@@ -60,7 +59,7 @@ class UserInfoResource extends JsonResource
             return null;
         }
 
-        $orders = Order::with('userPackage.package') // تحميل علاقات الباقة مرة واحدة
+        $orders = Order::with('userPackage.package')
         ->where('user_package_id', $userPackage->id)
             ->where('user_id', auth()->id())
             ->get();
