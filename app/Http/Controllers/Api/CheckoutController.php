@@ -152,15 +152,14 @@ class CheckoutController extends Controller
             }
 
             // Send admin notifications - wrapped to prevent checkout failure
-            try {
-                $this->checkOutservice->sendNotificationToAdmin($order);
-            } catch (\Exception $e) {
-                Log::error('Failed to send admin notifications during checkout', [
-                    'order_id' => $order->id,
-                    'error' => $e->getMessage()
-                ]);
-                // Continue - notifications can be sent later
-            }
+            // try {
+            //     $this->checkOutservice->sendNotificationToAdmin($order);
+            // } catch (\Exception $e) {
+            //     Log::error('Failed to send admin notifications during checkout', [
+            //         'order_id' => $order->id,
+            //         'error' => $e->getMessage()
+            //     ]);
+            // }
 
             DB::commit();
 

@@ -101,52 +101,6 @@ class ServicesController extends Controller
         ]);
     }
 
-
-//    public function getSpecificServiceTimes($service_id, Request $request) /* main function الفنكشن الاساسية */
-//    {
-//        // Retrieve the service
-//        $service = Product::findOrFail($service_id);
-//        // Use the provided booking date or default to the current date
-//        $BookinDate = $request->input('booking_date', now()->format('Y-m-d'));
-////        return $BookinDate;
-//
-//        // Calculate the times days starting from the booking date
-//        $dates = $this->generateCurrentDay($BookinDate); // بجيب التواريخ بناء علي التاريخ اللي اللي هييجي من startBookinDate
-//
-//        // Initialize an array to hold the time slots for each date
-//        $timeSlotsByDate = []; // ارراي هحط فيه الوقات بتاع اليوم
-//
-//        $allReservedTimes = $this->getAllReservedTimesForDate($dates);
-//
-//        // Loop through each date and generate the time slots for that day
-//        foreach ($dates as $date) {
-//            // Fetch reserved time slots for the selected day
-//            $reservedTimes = $this->getReservedTimeSlotsForService($date, $service_id);
-//            $reservedTimes = array_merge($reservedTimes, $allReservedTimes[$date] ?? []);
-//
-//            $setting = Setting::first();
-//            $workStartTime = $setting->working_strat_time;
-//            $workEndTime = $setting->working_end_time;
-//            $restStartTime = $setting->start_rest_time;
-//            $restEndTime = $setting->end_rest_time;
-//
-//            // Define the working hours and slot duration (e.g., 60 minutes)
-//            $timeSlots = $this->generateTimeSlotsWithStatus($workStartTime, $workEndTime, $service->duration, $reservedTimes, $BookinDate, $restStartTime, $restEndTime);
-//
-//            // Add the date and its time slots to the array
-//            $timeSlotsByDate[] = [
-//                'date' => $date,
-//                'timeSlots' => $timeSlots
-//            ];
-//        }
-//
-//        // Return the time slots by date in the desired format
-//        return response()->json([
-//            'status' => 'success',
-//            'timeSlotsByDate' => $timeSlotsByDate
-//        ]);
-//    }
-
     private function generateCurrentDay($BookinDate) // بجيب الاوقات بتاعت يوم واحد
     {
         $dates = [];
@@ -207,7 +161,7 @@ class ServicesController extends Controller
         $isToday = (date('Y-m-d') === $BookinDate);
 
 
-//        return $isToday;
+        //        return $isToday;
 
         while ($start < $end) {
             $timeSlot = date("H:i", $start); // 09:00
@@ -244,11 +198,11 @@ class ServicesController extends Controller
 
             // Determine the status
             if ($isReserved && $availableCaptains == 0) {
-//                $timeSlots[] = [
-//                    'time' => $timeSlot,
-//                    'status' => 'reserved',
-//                    'availableCaptains' => $availableCaptains,
-//                ];
+                //                $timeSlots[] = [
+                //                    'time' => $timeSlot,
+                //                    'status' => 'reserved',
+                //                    'availableCaptains' => $availableCaptains,
+                //                ];
             } else {
                 $timeSlots[] = [
                     'time' => $timeSlot,
@@ -272,6 +226,4 @@ class ServicesController extends Controller
         // Convert the time to minutes
         return ($hours * 60) + $minutes;
     }
-
-
 }
