@@ -66,7 +66,6 @@ Route::middleware(['changeLanguage'])->group(function () {
         Route::post('/apply-coupon/{orderId}', [CheckoutController::class, 'applyCoupon']);
         Route::post('/cancel-coupon/{orderId}', [CheckoutController::class, 'cancelCoupon']);
         Route::post('/test-notification', [CheckoutController::class, 'testnotification']);
-        Route::get('/available-times', [CheckoutController::class, 'showAvailableTimeSlots']);
         Route::post('/pay-order', [CheckoutController::class, 'payOrder']);
 
         ################################## subscribe packages #########################################
