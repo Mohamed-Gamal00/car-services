@@ -16,9 +16,9 @@ class SettingResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'website_name' => $this->getCurrentNameLangAttribute(),
-            'subscription_title' => $this->getCurrentSubscription_titleLangAttribute(),
-            'address' => $this->getCurrentAddressLangAttribute(),
+            'website_name' => $this->website_name,
+            'subscription_title' => $this->subscription_title,
+            'address' => $this->address,
             'phone_number' => $this->phone_number,
             'email' => $this->email,
             'whatsaap' => $this->whatsaap,

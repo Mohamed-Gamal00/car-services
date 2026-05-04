@@ -28,6 +28,7 @@
     "laravel/breeze": "^1.28",
     "laravel/pint": "^1.0",
     "laravel/sail": "^1.18",
+    "laravel/telescope": "^5.20",
     "mbezhanov/laravel-faker-provider-collection": "^2.2",
     "mockery/mockery": "^1.4.4",
     "nunomaduro/collision": "^7.0",

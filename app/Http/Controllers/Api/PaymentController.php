@@ -69,7 +69,6 @@ class PaymentController extends Controller
 
     public function callback($number)
     {
-
         $order = Order::where('number', $number)->first();
 
         $id = request()->query('id');
@@ -83,18 +82,18 @@ class PaymentController extends Controller
             ])
             ->get("payments/{$id}")
             ->json();
-
-        if (isset($payment['type']) && $payment['type'] === 'authentication_error') {
-            return redirect()->route('user.payment', [$order->number])->with('danger', __('general.Invalid_authorization_credentials'));
-        }
-
-        Log::info('payment');
+            
+            if (isset($payment['type']) && $payment['type'] === 'authentication_error') {
+                return redirect()->route('user.payment', [$order->number])->with('danger', __('general.Invalid_authorization_credentials'));
+            }
+            
+        Log::info('payment callback', ['order_number' => $number, 'payment_id' => $id]);
         $paymentData = [
             'user_id' => $order->user_id,
             'user_name' => $order->user->first_name . ' ' . $order->user->family_name,
             'order_number' => $order->number,
             'status' => $payment['status'],
-            'source' => $payment['source']['company'],
+            'source' => $payment['source']['company'] ?? 'unknown',
             'payment_id' => $payment['id'],
             'cur' => $payment['currency'],
             'amount' => $payment['amount'],
@@ -120,24 +119,31 @@ class PaymentController extends Controller
                     $captain->notify(new CaptainAssignedNotification($order));
                     Log::info('payment controller start assign captain to order');
                     dispatch(new AssignCaptainToOrder());
-
                 }
             }
             // Generate the invoice PDF and save the URL
             Log::info('create invoice url');
-            $invoicePath = $this->generateInvoicePDF($order);
-            $order->update(['invoice_url' => $invoicePath]);
+            try {
+                $order->load(['user', 'car', 'choices', 'service']);
+                // $invoicePath = $this->generateInvoicePDF($order);
+                // $order->update(['invoice_url' => $invoicePath]);
+                // Log::info('Invoice generated successfully', ['invoice_path' => $invoicePath]);
+            } catch (\Exception $e) {
+                Log::error('Invoice generation failed after payment', [
+                    'order_id' => $order->id,
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString()
+                ]);
+                // Continue without invoice - payment is already successful
+            }
 
             $order->save();
 
-//           Send notifications to admins
-
-
+            // Return success view instead of JSON
             return response()->json([
                 'status' => 'success',
                 'message' => 'payment successfully',
             ], 201);
-
 
         } elseif ($payment['status'] === 'failed') {
             $order->payment_status = 'failed';
@@ -149,10 +155,7 @@ class PaymentController extends Controller
 
         } else {
             return response()->json(['status' => 'error', 'message' => 'Order not found.'], 400);
-
         }
-
-
     }
 
     public function package_payment_index($package_id, $method)
@@ -183,84 +186,126 @@ class PaymentController extends Controller
         return 'this package not found';
     }
 
-    public function package_callback($package_id)
-    {
-        $package = Package::findOrFail($package_id);
+public function package_callback($package_id)
+{
+    Log::info('Package callback started', [
+        'package_id' => $package_id,
+        'query' => request()->all()
+    ]);
 
-        $id = request()->query('id');
-        $secret_key = Setting::pluck('secret_key')->first();
-        $token = base64_encode($secret_key . ':');
+    $package = Package::findOrFail($package_id);
 
-        $payment = Http::baseUrl('https://api.moyasar.com/v1')
-            ->withHeaders(['Authorization' => "Basic {$token}"])
-            ->get("payments/{$id}")
-            ->json();
+    $id = request()->query('id');
+    Log::info('Payment ID received', ['id' => $id]);
 
-        $reference = $payment['metadata']['reference'];
-        if (!$reference) {
-            return ApiResponse::sendResponse(400, 'Invalid reference');
+    $secret_key = Setting::pluck('secret_key')->first();
+    $token = base64_encode($secret_key . ':');
+
+    $payment = Http::baseUrl('https://api.moyasar.com/v1')
+        ->withHeaders(['Authorization' => "Basic {$token}"])
+        ->get("payments/{$id}")
+        ->json();
+
+    Log::info('Payment response', ['payment' => $payment]);
+
+    $reference = $payment['metadata']['reference'] ?? null;
+
+    if (!$reference) {
+        Log::warning('Reference is missing', ['payment' => $payment]);
+        return ApiResponse::sendResponse(400, 'Invalid reference');
+    }
+
+    if (isset($payment['type']) && $payment['type'] === 'authentication_error') {
+        Log::error('Authentication error from Moyasar', ['payment' => $payment]);
+
+        return redirect()->route('user.payment_package', [$package->id])
+            ->with('danger', __('general.Invalid_authorization_credentials'));
+    }
+
+    if ($payment['status'] === 'paid') {
+
+        Log::info('Payment is paid', ['payment_id' => $payment['id']]);
+
+        $existingPayment = Payment::where('payment_id', $payment['id'])->first();
+
+        if ($existingPayment && $existingPayment->status === 'paid') {
+            Log::info('Duplicate payment detected', ['payment_id' => $payment['id']]);
+            return ApiResponse::sendResponse(200, __('messages.PaidPayment'));
         }
 
-        if (isset($payment['type']) && $payment['type'] === 'authentication_error') {
-            return redirect()->route('user.payment_package', [$package->id])->with('danger', __('general.Invalid_authorization_credentials'));
-        }
+        $userPackage = UserPackage::where('reference', $reference)
+            ->where('status', 'inactive')
+            ->first();
 
-        if ($payment['status'] === 'paid') {
-
-            $existingPayment = Payment::where('payment_id', $payment['id'])->first();
-            if ($existingPayment && $existingPayment->status === 'paid') {
-                return ApiResponse::sendResponse(200, __('messages.PaidPayment'));
-            }
-
-            $userPackage = UserPackage::where('reference', $reference)
-                ->where('status', 'inactive')
-                ->first();
-
-            if (!$userPackage) {
-                return redirect()->route('user.payment_package', [
-                    'package_id' => $package->id,
-                    'method' => $payment['source']['type'] ?? 'unknown'])->with('danger', __('general.package_not_found_or_already_active'));
-            }
-
-            $userPackage->update([
-                'status' => 'active',
-                'start_date' => now(),
-                'expiry_date' => now()->addDays($package->validity_days),
+        if (!$userPackage) {
+            Log::warning('User package not found or already active', [
+                'reference' => $reference
             ]);
 
-            $paymentData = [
-                'user_id' => $userPackage->user_id,
-                'user_name' => $userPackage->user->first_name . ' ' . $userPackage->user->family_name,
-                'order_number' => null,
-                'package_reference' => $userPackage->reference,
-                'status' => $payment['status'],
-                'source' => $payment['source']['company'] ?? 'unknown',
-                'payment_id' => $payment['id'],
-                'cur' => $payment['currency'],
-                'amount' => $payment['amount'],
-                'description' => $payment['description'] ?? null,
-            ];
+            return redirect()->route('user.payment_package', [
+                'package_id' => $package->id,
+                'method' => $payment['source']['type'] ?? 'unknown'
+            ])->with('danger', __('general.package_not_found_or_already_active'));
+        }
 
-            $result = $this->paymentService->processPayment($paymentData);
-            
-            if ($result === 'already_paid') {
-                return ApiResponse::sendResponse(200, __('messages.PaidPayment'));
-            }
-            
-            return ApiResponse::sendResponse(200, 'success');
+        $userPackage->update([
+            'status' => 'active',
+            'start_date' => now(),
+            'expiry_date' => now()->addDays($package->validity_days),
+        ]);
 
-        } elseif ($payment['status'] === 'failed') {
-            // Update user package status to failed if payment failed
-            $userPackage = UserPackage::where('reference', $reference)->first();
-            if ($userPackage) {
-                $userPackage->update(['status' => 'payment_failed']);
-            }
-            
-            return ApiResponse::sendResponse(400, 'faild');
+        Log::info('User package activated', [
+            'user_package_id' => $userPackage->id
+        ]);
+
+        $paymentData = [
+            'user_id' => $userPackage->user_id,
+            'user_name' => $userPackage->user->first_name . ' ' . $userPackage->user->family_name,
+            'service_reference' => $userPackage->reference,
+            'order_number' => null,
+            'package_reference' => $userPackage->reference,
+            'status' => $payment['status'],
+            'source' => $payment['source']['company'] ?? 'unknown',
+            'payment_id' => $payment['id'],
+            'cur' => $payment['currency'],
+            'amount' => $payment['amount'],
+            'description' => $payment['description'] ?? null,
+        ];
+
+        Log::info('Sending payment to service', ['data' => $paymentData]);
+
+        $result = $this->paymentService->processPayment($paymentData);
+
+        Log::info('Payment service result', ['result' => $result]);
+
+        if ($result === 'already_paid') {
+            Log::info('Payment already processed in service');
+            return ApiResponse::sendResponse(200, __('messages.PaidPayment'));
+        }
+
+        return ApiResponse::sendResponse(200, 'success');
+
+    } elseif ($payment['status'] === 'failed') {
+
+        Log::warning('Payment failed', ['payment' => $payment]);
+
+        $userPackage = UserPackage::where('reference', $reference)->first();
+
+        if ($userPackage) {
+            $userPackage->update(['status' => 'payment_failed']);
+
+            Log::info('User package marked as failed', [
+                'user_package_id' => $userPackage->id
+            ]);
         }
 
         return ApiResponse::sendResponse(400, 'faild');
     }
+
+    Log::warning('Unhandled payment status', ['status' => $payment['status'] ?? null]);
+
+    return ApiResponse::sendResponse(400, 'faild');
+}
 
     public function renewal_package_payment_index($package_id, $method)
     {
@@ -341,7 +386,7 @@ class PaymentController extends Controller
             $userPackage->update([
                 'status' => 'active',
                 'start_date' => now(),
-                'expiry_date' => now()->addDays($package->validity_days),
+                'expiry_date' => now()->addDays($package->validity_in_days),
             ]);
 
             $paymentData = [

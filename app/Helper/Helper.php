@@ -201,50 +201,65 @@ trait Helper
 
     public function generateInvoicePDF($order_details)
     {
-        $data = [
-            'created_at' => $order_details->created_at,
-            'booking_date' => $order_details->booking_date,
-            'booking_time' => $order_details->booking_time,
-            'order_number' => $order_details->number,
-            'payment_status' => $order_details->payment_status,
-            'payment_method' => $order_details->payment_method,
-            'total_price' => $order_details->total_price,
-            'totalBeforeDiscount' => $order_details->totalBeforeDiscount,
-            'car_name' => $order_details->car->getCurrentNameLangAttribute() ?? 'N/A',
-            'car_model' => $order_details->car_model,
-            'car_number' => $order_details->car_number,
-            'user_name' => $order_details->user->first_name . ' ' . $order_details->user->family_name,
-            'user_phone' => $order_details->user->phone_number,
-            'discount_applied' => $order_details->discount_applied,
-            'service_name' => optional($order_details->products->first())->getCurrentNameLangAttribute()
-                ?? optional(optional($order_details->userPackage)->package)->getCurrentNameLangAttribute()
-                    ?? 'N/A',
-            'service_duration' => optional($order_details->products->first())->duration ?? 'N/A',
-            'service_price' => optional($order_details->products->first())->price
-                ?? optional(optional($order_details->userPackage)->package)->price
-                    ?? 0,
-            'service_choices' => $order_details->choices,
-        ];
+        try {
+            $data = [
+                'created_at' => $order_details->created_at,
+                'booking_date' => $order_details->booking_date,
+                'booking_time' => $order_details->booking_time,
+                'order_number' => $order_details->number,
+                'payment_status' => $order_details->payment_status,
+                'payment_method' => $order_details->payment_method,
+                'total_price' => $order_details->total_price,
+                'totalBeforeDiscount' => $order_details->totalBeforeDiscount,
+                'car_name' => $order_details->car->getCurrentNameAttribute() ?? 'N/A',
+                'car_model' => $order_details->car_model,
+                'car_number' => $order_details->car_number,
+                'user_name' => $order_details->user->first_name . ' ' . $order_details->user->family_name,
+                'user_phone' => $order_details->user->phone_number,
+                'discount_applied' => $order_details->discount_applied,
+                'service_name' => optional($order_details->service)->getCurrentNameAttribute()
+                    ?? optional(optional($order_details->userPackage)->package)->getCurrentNameAttribute()
+                        ?? 'N/A',
+                'service_duration' => optional($order_details->service)->duration ?? optional(optional($order_details->userPackage)->package)->duration ?? 'N/A',
+                'service_price' => optional($order_details->service)->price
+                    ?? optional(optional($order_details->userPackage)->package)->price
+                        ?? 0,
+                'service_choices' => $order_details->choices ?? collect([]),
+            ];
 
-        // Render Blade template as HTML
-        $html = view('invoice.invoice', ['data' => $data])->render();
+            // Render Blade template as HTML
+            $html = view('invoice.invoice', ['data' => $data])->render();
+            
+            // Check if HTML is empty
+            if (empty(trim($html))) {
+                Log::error('Invoice HTML is empty', ['order_id' => $order_details->id]);
+                throw new \Exception('Failed to generate invoice HTML');
+            }
 
-        // Create MPDF instance
-        $mpdf = new Mpdf(['tempDir' => storage_path('temp')]); // Specify a temp directory if needed
+            // Create MPDF instance
+            $mpdf = new Mpdf(['tempDir' => storage_path('temp')]); // Specify a temp directory if needed
 
-        // Write the HTML content
-        $mpdf->WriteHTML($html);
+            // Write the HTML content
+            $mpdf->WriteHTML($html);
 
-        // Generate PDF content
-        $pdfContent = $mpdf->Output('', 'S'); // S = return as string
+            // Generate PDF content
+            $pdfContent = $mpdf->Output('', 'S'); // S = return as string
 
-        $fileName = 'invoice_' . time() . '_' . Str::random(5) . '.pdf';
-        $filePath = 'invoices/' . $fileName;
+            $fileName = 'invoice_' . time() . '_' . Str::random(5) . '.pdf';
+            $filePath = 'invoices/' . $fileName;
 
-        // Save PDF to storage
-        Storage::disk('public')->put($filePath, $pdfContent);
+            // Save PDF to storage
+            Storage::disk('public')->put($filePath, $pdfContent);
 
-        return $filePath;
+            return $filePath;
+        } catch (\Exception $e) {
+            Log::error('Invoice generation failed', [
+                'order_id' => $order_details->id ?? 'unknown',
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            throw $e;
+        }
     }
 
 }

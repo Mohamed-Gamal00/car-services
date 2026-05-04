@@ -33,7 +33,6 @@ class CaptainOrderController extends Controller
             ->with('products', 'orderStatus', 'choices')
             ->where('captain_id', $user->id)
             ->where('order_status_id', 4)
-            ->where('return_order', false)
             ->count();
         $data = [
             'completed_orders' => $completed_orders,
@@ -57,7 +56,6 @@ class CaptainOrderController extends Controller
         $returend_orders = Order::latest()
             ->with('products', 'orderStatus', 'choices') // Include related data
             ->where('captain_id', $user->id)
-            ->where('return_order', true) // Filter by return_order = true
             ->get();
 
         $completed_orders = Order::latest()
@@ -102,7 +100,6 @@ class CaptainOrderController extends Controller
         $order = Order::latest()
             ->with('products', 'orderStatus', 'choices', 'user','userPackage.package')
             ->where('captain_id', $user->id)
-            ->where('return_order', false)
             ->where('number', $number)
             ->first();
 

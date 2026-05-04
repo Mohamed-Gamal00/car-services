@@ -14,9 +14,9 @@ use Stichoza\GoogleTranslate\GoogleTranslate;
  */
 function translateWithHTMLTags($html, $targetLang = null)
 {
-    // Return original content if empty
-    if (empty($html)) {
-        return $html;
+    // Return original content if empty or null
+    if (empty($html) || is_null($html)) {
+        return $html ?? '';
     }
 
     $targetLang = $targetLang ?? App::getLocale();

@@ -22,7 +22,6 @@ class PaymentService
             if ($existingPayment->status === 'paid') {
                 return 'already_paid';
             }
-            
             // Update existing payment if status changed
             $existingPayment->update([
                 'status' => $paymentData['status'],
@@ -36,7 +35,7 @@ class PaymentService
         }
 
         // Generate unique reference if not provided
-        $reference = $paymentData['package_reference'] ?? $paymentData['order_number'] ?? \Illuminate\Support\Str::uuid()->toString();
+        $reference = $paymentData['package_reference'] ?? $paymentData['order_number'].\Illuminate\Support\Str::uuid()->toString() ?? \Illuminate\Support\Str::uuid()->toString();
 
         try {
             Log::info('Creating new payment', ['payment_id' => $paymentData['payment_id']]);

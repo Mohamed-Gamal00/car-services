@@ -40,7 +40,8 @@ class CheckoutRequest extends FormRequest
             'longitude' => 'required',
             'location' => 'nullable',
             'payment_method' => $isUsingPackage ? 'nullable' : 'required|in:creditcard,mada,applepay',
-            'choices*' => 'nullable|array',
+            'choices' => 'nullable|array',
+            'choices.*' => 'nullable|integer|exists:choices,id',
             'images' => 'nullable|array',
             'images.*' => 'image',
         ];

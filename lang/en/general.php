@@ -37,5 +37,18 @@ return [
     'Please_renew_your_package' => 'Please renew your package',
     'Your_package_will_expire_soon' => 'Your package will expire soon',
     'You_have_3_days_to_renew' => 'You have 3 days to renew',
-
+    
+    // Payment result page
+    'payment_result' => 'Payment Result',
+    'payment_successful' => 'Payment Successful',
+    'payment_failed' => 'Payment Failed',
+    'payment_error' => 'Payment Error',
+    'order_number' => 'Order Number',
+    'total_amount' => 'Total Amount',
+    'payment_status' => 'Payment Status',
+    'paid' => 'Paid',
+    'sar' => 'SAR',
+    'back_to_home' => 'Back to Home',
+    'try_again' => 'Try Again',
+    'payment_failed_message' => 'Sorry, the payment failed. Please try again.',
 ];

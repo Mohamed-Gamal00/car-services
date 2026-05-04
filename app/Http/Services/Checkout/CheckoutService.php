@@ -104,10 +104,20 @@ class CheckoutService
 
     public function createOrder($request, $package, $orderTotalPrice, $captain, $userPackage)
     {
+        // Get default order status
+        $defaultStatus = OrderStatus::where('default_status', true)->first();
+        if (!$defaultStatus) {
+            // Fallback to first status if no default is set
+            $defaultStatus = OrderStatus::first();
+            if (!$defaultStatus) {
+                throw new \Exception('لا توجد حالات طلب متاحة في النظام', 500);
+            }
+        }
+
         $order = Order::create([
             'user_id' => $request->user()->id,
-            'product_id' => $package->id,
-            'order_status_id' => $captain ? 3 : OrderStatus::select('id')->where('default_status', true)->first()->id,
+            'service_id' => $package->id,
+            'order_status_id' => $captain ? 3 : $defaultStatus->id,
             'car_id' => $request->car_id,
             'car_model' => $request->car_model,
             'car_number' => $request->car_number,
@@ -144,8 +154,16 @@ class CheckoutService
             }
         }
 
-        if ($request->has('choices')) {
-            $order->choices()->attach($request->choices);
+        // خدمات إضافية - validate choice IDs before attaching
+        if ($request->has('choices') && is_array($request->choices)) {
+            // Filter out invalid/null choice IDs and validate they exist
+            $validChoiceIds = Choice::whereIn('id', array_filter($request->choices))
+                ->pluck('id')
+                ->toArray();
+            
+            if (!empty($validChoiceIds)) {
+                $order->choices()->attach($validChoiceIds);
+            }
         }
 
         // Handle order images
@@ -163,21 +181,33 @@ class CheckoutService
 
     public function sendNotificationToAdmin($order)
     {
+        try {
+            $admins = Admin::whereNotIn('id', [13, 14, 15])->get();
 
-        $admins = Admin::whereNotIn('id', [13, 14, 15])->get();
+            Notification::send($admins, new OrderCreatedNotification($order));
 
-        Notification::send($admins, new OrderCreatedNotification($order));
+            $validAdmins = $admins->filter(function ($admin) {
+                return filter_var($admin->email, FILTER_VALIDATE_EMAIL);
+            });
 
-        $validAdmins = $admins->filter(function ($admin) {
-            return filter_var($admin->email, FILTER_VALIDATE_EMAIL);
-        });
-
-        foreach ($validAdmins as $admin) {
-            try {
-                Notification::route('mail', $admin->email)
-                    ->notify(new OrderCreatedEmailAdmin($order));
-            } catch (\Exception $e) {
+            foreach ($validAdmins as $admin) {
+                try {
+                    Notification::route('mail', $admin->email)
+                        ->notify(new OrderCreatedEmailAdmin($order));
+                } catch (\Exception $e) {
+                    Log::warning('Failed to send email notification to admin', [
+                        'admin_email' => $admin->email,
+                        'error' => $e->getMessage()
+                    ]);
+                }
             }
+        } catch (\Exception $e) {
+            Log::error('Failed to send notifications to admins', [
+                'order_id' => $order->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            // Don't throw - allow checkout to continue even if notifications fail
         }
     }
 
@@ -202,10 +232,20 @@ class CheckoutService
 
         $this->checkTimeReservation($request);
 
+        // Get default order status
+        $defaultStatus = OrderStatus::where('default_status', true)->first();
+        if (!$defaultStatus) {
+            // Fallback to first status if no default is set
+            $defaultStatus = OrderStatus::first();
+            if (!$defaultStatus) {
+                throw new \Exception('لا توجد حالات طلب متاحة في النظام', 500);
+            }
+        }
+
         $order = Order::create([
             'user_id' => $user->id,
-            'product_id' => $service->id,
-            'order_status_id' => OrderStatus::where('default_status', true)->first()->id,
+            'service_id' => $service->id,
+            'order_status_id' => $defaultStatus->id,
             'car_id' => $request->car_id,
             'car_model' => $request->car_model,
             'car_number' => $request->car_number,
@@ -220,13 +260,6 @@ class CheckoutService
             'total_price' => $orderTotalPrice,
             'payment_method' => $request->payment_method,
             'captain_id' => null,
-        ]);
-
-        OrderItem::create([
-            'order_id' => $order->id,
-            'product_id' => $service->id,
-            'product_name' => $service->name,
-            'price' => $service->price,
         ]);
 
         // خصم
@@ -244,9 +277,16 @@ class CheckoutService
             ]);
         }
 
-        // خدمات إضافية
-        if ($request->has('choices')) {
-            $order->choices()->attach($request->choices);
+        // خدمات إضافية - validate choice IDs before attaching
+        if ($request->has('choices') && is_array($request->choices)) {
+            // Filter out invalid/null choice IDs and validate they exist
+            $validChoiceIds = Choice::whereIn('id', array_filter($request->choices))
+                ->pluck('id')
+                ->toArray();
+            
+            if (!empty($validChoiceIds)) {
+                $order->choices()->attach($validChoiceIds);
+            }
         }
 
         // صور

@@ -37,4 +37,18 @@ return [
     'Please_renew_your_package' => 'يرجى تجديد الباقة للاستمرار في الخدمة',
     'Your_package_will_expire_soon' => 'باقتك ستنتهي قريبًا',
     'You_have_3_days_to_renew' => 'تبقى 3 أيام لتجديد الباقة',
+    
+    // Payment result page
+    'payment_result' => 'نتيجة الدفع',
+    'payment_successful' => 'تم الدفع بنجاح',
+    'payment_failed' => 'فشل الدفع',
+    'payment_error' => 'خطأ في الدفع',
+    'order_number' => 'رقم الطلب',
+    'total_amount' => 'المبلغ الإجمالي',
+    'payment_status' => 'حالة الدفع',
+    'paid' => 'مدفوع',
+    'sar' => 'ريال',
+    'back_to_home' => 'العودة للرئيسية',
+    'try_again' => 'حاول مرة أخرى',
+    'payment_failed_message' => 'عذراً، فشلت عملية الدفع. يرجى المحاولة مرة أخرى.',
 ];

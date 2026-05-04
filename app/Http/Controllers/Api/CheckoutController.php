@@ -61,6 +61,12 @@ class CheckoutController extends Controller
         try {
             $isPackage = $request->has('user_package_id');
             $orderTotalPrice = 0;
+            
+            Log::info('Checkout started', [
+                'service_id' => $service_id,
+                'is_package' => $isPackage,
+                'user_package_id' => $request->user_package_id ?? null
+            ]);
 
             if ($isPackage) {
                 //  طلب من باقة
@@ -73,8 +79,22 @@ class CheckoutController extends Controller
                 $captain = $availableCaptains->shift();
 
                 $order = $this->checkOutservice->createOrder($request, $package, $orderTotalPrice, $captain, $userPackage);
-                $invoicePath = $this->checkOutservice->generateInvoicePDF($order);
-                $order->update(['invoice_url' => $invoicePath]);
+
+                
+                // Load relationships needed for invoice generation
+                $order->load(['user', 'car', 'choices', 'userPackage.package']);
+                
+                // Generate invoice - wrap in try-catch to prevent checkout failure
+                try {
+                    $invoicePath = $this->checkOutservice->generateInvoicePDF($order);
+                    $order->update(['invoice_url' => $invoicePath]);
+                } catch (\Exception $e) {
+                    Log::error('Invoice generation failed during checkout', [
+                        'order_id' => $order->id,
+                        'error' => $e->getMessage()
+                    ]);
+                    // Continue without invoice - it can be generated later
+                }
                 $userPackage->decrement('remaining_washes');
 
                 $userPackage->refresh(); // علشان نجيب القيمة الجديدة من قاعدة البيانات
@@ -118,21 +138,28 @@ class CheckoutController extends Controller
                 $existingAddress = $user->addresses()->where([
                     'latitude' => $request->latitude,
                     'longitude' => $request->longitude,
-                    'address_title' => $request->location,
+                    'address' => $request->location,
                 ])->first();
 
                 if (!$existingAddress) {
                     $user->addresses()->create([
                         'latitude' => $request->latitude,
                         'longitude' => $request->longitude,
-                        'address_title' => $request->location,
+                        'address' => $request->location,
                         'user_id' => $user->id,
                     ]);
                 }
             }
 
-            if ($request->has('choices')) {
-                $order->choices()->attach($request->choices);
+            if ($request->has('choices') && is_array($request->choices)) {
+                // Filter out invalid/null choice IDs and validate they exist
+                $validChoiceIds = Choice::whereIn('id', array_filter($request->choices))
+                    ->pluck('id')
+                    ->toArray();
+                
+                if (!empty($validChoiceIds)) {
+                    $order->choices()->attach($validChoiceIds);
+                }
             }
 
             if ($request->hasFile('images')) {
@@ -142,7 +169,7 @@ class CheckoutController extends Controller
                 }
             }
 
-            $this->checkOutservice->sendNotificationToAdmin($order);
+            // $this->checkOutservice->sendNotificationToAdmin($order);
 
             DB::commit();
 

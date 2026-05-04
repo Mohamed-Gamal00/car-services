@@ -33,10 +33,10 @@ class CaptainAuthController extends Controller
     {
 
         $loginUserData = $request->validate([
-            'phone_number' => 'required|',
+            'phone' => 'required|',
             'password' => 'required|min:6'
         ]);
-        $user = Captain::where('phone_number', $loginUserData['phone_number'])->first();
+        $user = Captain::where('phone', $loginUserData['phone'])->first();
         if (!$user || !Hash::check($loginUserData['password'], $user->password)) {
             return response()->json([
                 'message' => 'Invalid Credentials'
