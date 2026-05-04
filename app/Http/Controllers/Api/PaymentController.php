@@ -123,19 +123,19 @@ class PaymentController extends Controller
             }
             // Generate the invoice PDF and save the URL
             Log::info('create invoice url');
-            try {
-                $order->load(['user', 'car', 'choices', 'service']);
-                // $invoicePath = $this->generateInvoicePDF($order);
-                // $order->update(['invoice_url' => $invoicePath]);
-                // Log::info('Invoice generated successfully', ['invoice_path' => $invoicePath]);
-            } catch (\Exception $e) {
-                Log::error('Invoice generation failed after payment', [
-                    'order_id' => $order->id,
-                    'error' => $e->getMessage(),
-                    'trace' => $e->getTraceAsString()
-                ]);
-                // Continue without invoice - payment is already successful
-            }
+            // try {
+            //     $order->load(['user', 'car', 'choices', 'service']);
+            //     $invoicePath = $this->generateInvoicePDF($order);
+            //     $order->update(['invoice_url' => $invoicePath]);
+            //     Log::info('Invoice generated successfully', ['invoice_path' => $invoicePath]);
+            // } catch (\Exception $e) {
+            //     Log::error('Invoice generation failed after payment', [
+            //         'order_id' => $order->id,
+            //         'error' => $e->getMessage(),
+            //         'trace' => $e->getTraceAsString()
+            //     ]);
+            //     // Continue without invoice - payment is already successful
+            // }
 
             $order->save();
 

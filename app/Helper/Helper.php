@@ -49,7 +49,7 @@ trait Helper
 
     public function checkIfProductExists(Request $request, $productId = null)
     {
-//        $userId = $request->header('userId');
+        //        $userId = $request->header('userId');
 
         $userId = $request->user()->id ?? $request->header('user-id');
         $guestId = $request->header('guest-id');
@@ -71,7 +71,6 @@ trait Helper
                 return true;
             }
             return false;
-
         }
         return false;
     }
@@ -151,7 +150,6 @@ trait Helper
                     }
                 }
             }
-
         } catch (\Exception $ex) {
             Log::error('Notification error', ['error' => $ex->getMessage()]);
         }
@@ -202,48 +200,174 @@ trait Helper
     public function generateInvoicePDF($order_details)
     {
         try {
+            Log::info('Starting invoice generation', [
+                'order_id' => $order_details->id ?? 'unknown',
+                'order_number' => $order_details->number ?? 'unknown'
+            ]);
+
+            // Ensure relationships are loaded with detailed logging
+            if (!$order_details->relationLoaded('user')) {
+                Log::info('Loading user relationship');
+                $order_details->load('user');
+            }
+            if (!$order_details->relationLoaded('car')) {
+                Log::info('Loading car relationship');
+                $order_details->load('car');
+            }
+            if (!$order_details->relationLoaded('choices')) {
+                Log::info('Loading choices relationship');
+                $order_details->load('choices');
+            }
+            if (!$order_details->relationLoaded('service')) {
+                Log::info('Loading service relationship');
+                $order_details->load('service');
+            }
+            if (!$order_details->relationLoaded('userPackage')) {
+                Log::info('Loading userPackage relationship');
+                $order_details->load('userPackage.package');
+            }
+
+            // Verify critical relationships exist
+            if (!$order_details->user) {
+                Log::error('User relationship is null', ['order_id' => $order_details->id]);
+            }
+            if (!$order_details->service && !$order_details->userPackage) {
+                Log::error('Both service and userPackage relationships are null', ['order_id' => $order_details->id]);
+            }
+
+            // Build data array with comprehensive null checks and defaults
+            $userName = 'N/A';
+            if ($order_details->user) {
+                $firstName = $order_details->user->first_name ?? '';
+                $familyName = $order_details->user->family_name ?? '';
+                $userName = trim($firstName . ' ' . $familyName) ?: 'N/A';
+            }
+
+            $carName = 'N/A';
+            if ($order_details->car) {
+                try {
+                    $carName = $order_details->car->getCurrentNameAttribute() ?? 'N/A';
+                } catch (\Exception $e) {
+                    Log::warning('Failed to get car name', ['error' => $e->getMessage()]);
+                    $carName = 'N/A';
+                }
+            }
+
+            $serviceName = 'N/A';
+            $serviceDuration = 'N/A';
+            $servicePrice = 0;
+
+            if ($order_details->service) {
+                try {
+                    $serviceName = $order_details->service->getCurrentNameAttribute() ?? 'N/A';
+                    $serviceDuration = $order_details->service->duration ?? 'N/A';
+                    $servicePrice = $order_details->service->price ?? 0;
+                } catch (\Exception $e) {
+                    Log::warning('Failed to get service details', ['error' => $e->getMessage()]);
+                }
+            } elseif ($order_details->userPackage && $order_details->userPackage->package) {
+                try {
+                    $serviceName = $order_details->userPackage->package->getCurrentNameAttribute() ?? 'N/A';
+                    $serviceDuration = $order_details->userPackage->package->duration ?? 'N/A';
+                    $servicePrice = $order_details->userPackage->package->price ?? 0;
+                } catch (\Exception $e) {
+                    Log::warning('Failed to get package details', ['error' => $e->getMessage()]);
+                }
+            }
+
             $data = [
-                'created_at' => $order_details->created_at,
-                'booking_date' => $order_details->booking_date,
-                'booking_time' => $order_details->booking_time,
-                'order_number' => $order_details->number,
-                'payment_status' => $order_details->payment_status,
-                'payment_method' => $order_details->payment_method,
-                'total_price' => $order_details->total_price,
-                'totalBeforeDiscount' => $order_details->totalBeforeDiscount,
-                'car_name' => $order_details->car->getCurrentNameAttribute() ?? 'N/A',
-                'car_model' => $order_details->car_model,
-                'car_number' => $order_details->car_number,
-                'user_name' => $order_details->user->first_name . ' ' . $order_details->user->family_name,
-                'user_phone' => $order_details->user->phone_number,
-                'discount_applied' => $order_details->discount_applied,
-                'service_name' => optional($order_details->service)->getCurrentNameAttribute()
-                    ?? optional(optional($order_details->userPackage)->package)->getCurrentNameAttribute()
-                        ?? 'N/A',
-                'service_duration' => optional($order_details->service)->duration ?? optional(optional($order_details->userPackage)->package)->duration ?? 'N/A',
-                'service_price' => optional($order_details->service)->price
-                    ?? optional(optional($order_details->userPackage)->package)->price
-                        ?? 0,
+                'created_at' => $order_details->created_at ?? now(),
+                'booking_date' => $order_details->booking_date ?? 'N/A',
+                'booking_time' => $order_details->booking_time ?? 'N/A',
+                'order_number' => $order_details->number ?? 'N/A',
+                'payment_status' => $order_details->payment_status ?? 'pending',
+                'payment_method' => $order_details->payment_method ?? 'N/A',
+                'total_price' => $order_details->total_price ?? 0,
+                'totalBeforeDiscount' => $order_details->totalBeforeDiscount ?? 0,
+                'car_name' => $carName,
+                'car_model' => $order_details->car_model ?? 'N/A',
+                'car_number' => $order_details->car_number ?? 'N/A',
+                'user_name' => $userName,
+                'user_phone' => $order_details->user->phone_number ?? 'N/A',
+                'discount_applied' => $order_details->discount_applied ?? null,
+                'service_name' => $serviceName,
+                'service_duration' => $serviceDuration,
+                'service_price' => $servicePrice,
                 'service_choices' => $order_details->choices ?? collect([]),
             ];
 
+            Log::info('Invoice data prepared', [
+                'order_id' => $order_details->id,
+                'has_service' => !is_null($order_details->service),
+                'has_package' => !is_null($order_details->userPackage),
+                'choices_count' => $data['service_choices']->count()
+            ]);
+
             // Render Blade template as HTML
-            $html = view('invoice.invoice', ['data' => $data])->render();
-            
-            // Check if HTML is empty
-            if (empty(trim($html))) {
-                Log::error('Invoice HTML is empty', ['order_id' => $order_details->id]);
-                throw new \Exception('Failed to generate invoice HTML');
+            try {
+                $html = view('invoice.invoice', ['data' => $data])->render();
+            } catch (\Exception $e) {
+                Log::error('Failed to render invoice view', [
+                    'order_id' => $order_details->id,
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString()
+                ]);
+                throw new \Exception('Failed to render invoice template: ' . $e->getMessage());
             }
 
+            // Check if HTML is empty
+            if (empty(trim($html))) {
+                Log::error('Invoice HTML is empty after rendering', [
+                    'order_id' => $order_details->id,
+                    'data' => $data
+                ]);
+                throw new \Exception('Generated invoice HTML is empty');
+            }
+
+            Log::info('Invoice HTML generated', [
+                'order_id' => $order_details->id,
+                'html_length' => strlen($html)
+            ]);
+
             // Create MPDF instance
-            $mpdf = new Mpdf(['tempDir' => storage_path('temp')]); // Specify a temp directory if needed
+            try {
+                Log::info('Creating MPDF instance', ['order_id' => $order_details->id]);
+                
+                $mpdf = new Mpdf([
+                    'tempDir' => storage_path('temp'),
+                    'mode' => 'utf-8',
+                    'format' => 'A4',
+                    'margin_left' => 10,
+                    'margin_right' => 10,
+                    'margin_top' => 10,
+                    'margin_bottom' => 10,
+                ]);
 
-            // Write the HTML content
-            $mpdf->WriteHTML($html);
+                Log::info('MPDF instance created', ['order_id' => $order_details->id]);
 
-            // Generate PDF content
-            $pdfContent = $mpdf->Output('', 'S'); // S = return as string
+                // Write the HTML content
+                Log::info('Writing HTML to MPDF', ['order_id' => $order_details->id]);
+                $mpdf->WriteHTML($html);
+                
+                Log::info('HTML written to MPDF', ['order_id' => $order_details->id]);
+
+                // Generate PDF content
+                Log::info('Generating PDF output', ['order_id' => $order_details->id]);
+                $pdfContent = $mpdf->Output('', 'S'); // S = return as string
+                
+                Log::info('PDF content generated', [
+                    'order_id' => $order_details->id,
+                    'pdf_size' => strlen($pdfContent)
+                ]);
+            } catch (\Mpdf\MpdfException $e) {
+                Log::error('MPDF Exception', [
+                    'order_id' => $order_details->id,
+                    'error' => $e->getMessage(),
+                    'file' => $e->getFile(),
+                    'line' => $e->getLine()
+                ]);
+                throw $e;
+            }
 
             $fileName = 'invoice_' . time() . '_' . Str::random(5) . '.pdf';
             $filePath = 'invoices/' . $fileName;
@@ -251,15 +375,24 @@ trait Helper
             // Save PDF to storage
             Storage::disk('public')->put($filePath, $pdfContent);
 
+            Log::info('Invoice PDF generated successfully', [
+                'order_id' => $order_details->id,
+                'file_path' => $filePath,
+                'file_size' => strlen($pdfContent)
+            ]);
+
             return $filePath;
         } catch (\Exception $e) {
-            Log::error('Invoice generation failed', [
+            Log::error('Invoice generation failed in Helper', [
                 'order_id' => $order_details->id ?? 'unknown',
+                'order_number' => $order_details->number ?? 'unknown',
                 'error' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
                 'trace' => $e->getTraceAsString()
             ]);
-            throw $e;
+            // Don't throw - return null to allow payment to continue
+            return null;
         }
     }
-
 }
