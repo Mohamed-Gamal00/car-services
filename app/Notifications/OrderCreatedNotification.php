@@ -40,7 +40,7 @@ class OrderCreatedNotification extends Notification
 
         return (new MailMessage)
             ->line('The introduction to the notification.')
-            ->line("تم انشاء طلب جديد (#{$this->order->addresses()->first()->first_name}) ");
+            ->line("تم انشاء طلب جديد (#{$this->order->number}) ");
     }
 
     public function toDatabase($notifiable)

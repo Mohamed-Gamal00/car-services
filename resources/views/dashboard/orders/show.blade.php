@@ -101,7 +101,7 @@
 
                         @forelse($order->images as $image)
                             <span>
-                                <img src="{{ asset('storage/' . $image->image) }} " width="50px" height="50px"
+                                <img src="{{ asset('storage/' . $image->image_path) }} " width="50px" height="50px"
                                      alt="Order Image">
                             </span>
                         @empty

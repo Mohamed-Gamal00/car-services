@@ -151,25 +151,16 @@ class CheckoutController extends Controller
                 }
             }
 
-            if ($request->has('choices') && is_array($request->choices)) {
-                // Filter out invalid/null choice IDs and validate they exist
-                $validChoiceIds = Choice::whereIn('id', array_filter($request->choices))
-                    ->pluck('id')
-                    ->toArray();
-                
-                if (!empty($validChoiceIds)) {
-                    $order->choices()->attach($validChoiceIds);
-                }
+            // Send admin notifications - wrapped to prevent checkout failure
+            try {
+                $this->checkOutservice->sendNotificationToAdmin($order);
+            } catch (\Exception $e) {
+                Log::error('Failed to send admin notifications during checkout', [
+                    'order_id' => $order->id,
+                    'error' => $e->getMessage()
+                ]);
+                // Continue - notifications can be sent later
             }
-
-            if ($request->hasFile('images')) {
-                foreach ($request->file('images') as $image) {
-                    $path = $image->store('uploads/order_images', 'public');
-                    $order->images()->create(['image' => $path]);
-                }
-            }
-
-            // $this->checkOutservice->sendNotificationToAdmin($order);
 
             DB::commit();
 

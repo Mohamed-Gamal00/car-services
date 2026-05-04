@@ -37,10 +37,12 @@ class OrderCreatedEmailAdmin extends Notification
      */
     public function toMail(object $notifiable): MailMessage
     {
+        // Load necessary relationships to prevent N+1 queries and null errors
+        $this->order->load(['user', 'car', 'service', 'userPackage.package', 'choices']);
 
         return (new MailMessage)
-            ->subject('تم انشاء طلب جديد')
-            ->line("تم انشاء طلب جديد برقم (#{$this->order->number}) ");
+            ->subject('تم إنشاء طلب جديد - #' . $this->order->number)
+            ->view('emails.order-created-admin', ['order' => $this->order]);
     }
 
     /**
@@ -51,7 +53,10 @@ class OrderCreatedEmailAdmin extends Notification
     public function toArray(object $notifiable): array
     {
         return [
-            //
+            'order_id' => $this->order->id,
+            'order_number' => $this->order->number,
+            'total_price' => $this->order->total_price,
+            'payment_status' => $this->order->payment_status,
         ];
     }
 }

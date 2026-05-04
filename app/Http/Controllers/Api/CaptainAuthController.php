@@ -136,7 +136,7 @@ class CaptainAuthController extends Controller
         // Validate the incoming request
         $validator = validator()->make($request->all(), [
             'token' => 'required',   // Device token
-            'type' => 'nullable|in:android,ios',
+            'device_type' => 'nullable|in:android,ios',
         ]);
 
         if ($validator->fails()) {
@@ -147,17 +147,25 @@ class CaptainAuthController extends Controller
             ]);
         }
 
+        $captain = $request->user();
+
         // Delete any existing tokens with the same token value for other captains
         DeviceToken::where('token', $request->token)
-            ->where('captain_id', '!=', $request->user()->id)
+            ->where(function ($query) use ($captain) {
+                $query->where('tokenable_type', '!=', Captain::class)
+                    ->orWhere('tokenable_id', '!=', $captain->id);
+            })
             ->delete();
 
-        // Update or create a token for the authenticated captain
+        // Update or create a token for the authenticated captain using polymorphic relationship
         DeviceToken::updateOrCreate(
-            ['captain_id' => $request->user()->id], // Find by captain ID
             [
-                'token' => $request->token,          // Update the token
-                'type' => $request->type,           // Update type if provided
+                'tokenable_type' => Captain::class,
+                'tokenable_id' => $captain->id,
+            ],
+            [
+                'token' => $request->token,
+                'device_type' => $request->device_type ?? $request->type, // Support both field names
             ]
         );
 

@@ -182,10 +182,23 @@ class CheckoutService
     public function sendNotificationToAdmin($order)
     {
         try {
-            $admins = Admin::whereNotIn('id', [13, 14, 15])->get();
+            // Load all necessary relationships before sending notifications
+            $order->load(['user', 'car', 'service', 'userPackage.package', 'choices']);
+            
+            $admins = Admin::where('is_super_admin',1)->get();
 
-            Notification::send($admins, new OrderCreatedNotification($order));
+            // Send database notification (doesn't require email rendering)
+            try {
+                Notification::send($admins, new OrderCreatedNotification($order));
+                Log::info('Database notification sent to admins', ['order_id' => $order->id]);
+            } catch (\Exception $e) {
+                Log::warning('Failed to send database notification to admins', [
+                    'order_id' => $order->id,
+                    'error' => $e->getMessage()
+                ]);
+            }
 
+            // Send email notifications
             $validAdmins = $admins->filter(function ($admin) {
                 return filter_var($admin->email, FILTER_VALIDATE_EMAIL);
             });
@@ -194,16 +207,23 @@ class CheckoutService
                 try {
                     Notification::route('mail', $admin->email)
                         ->notify(new OrderCreatedEmailAdmin($order));
+                    Log::info('Email notification sent to admin', [
+                        'admin_email' => $admin->email,
+                        'order_id' => $order->id
+                    ]);
                 } catch (\Exception $e) {
                     Log::warning('Failed to send email notification to admin', [
                         'admin_email' => $admin->email,
-                        'error' => $e->getMessage()
+                        'order_id' => $order->id,
+                        'error' => $e->getMessage(),
+                        'trace' => $e->getTraceAsString()
                     ]);
+                    // Continue to next admin
                 }
             }
         } catch (\Exception $e) {
             Log::error('Failed to send notifications to admins', [
-                'order_id' => $order->id,
+                'order_id' => $order->id ?? 'unknown',
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
@@ -255,7 +275,7 @@ class CheckoutService
             'booking_time' => $request->booking_time,
             'latitude' => $request->latitude,
             'longitude' => $request->longitude,
-            'location' => $request->location,
+            'address' => $request->location,
             'totalBeforeDiscount' => $orderTotalPrice,
             'total_price' => $orderTotalPrice,
             'payment_method' => $request->payment_method,
@@ -293,7 +313,7 @@ class CheckoutService
         if ($request->hasFile('images')) {
             foreach ($request->file('images') as $image) {
                 $path = $image->store('uploads/order_images', 'public');
-                $order->images()->create(['image' => $path]);
+                $order->images()->create(['image_path' => $path]);
             }
         }
 

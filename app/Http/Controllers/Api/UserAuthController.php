@@ -280,7 +280,7 @@ class UserAuthController extends Controller
         // Validate the request
         $validator = validator()->make($request->all(), [
             'token' => 'required',   // Device token
-            'type' => 'nullable|in:android,ios',
+            'device_type' => 'nullable|in:android,ios',
         ]);
 
         if ($validator->fails()) {
@@ -291,12 +291,25 @@ class UserAuthController extends Controller
             ]);
         }
 
-        // Check if the token exists for the user and update it, or create a new one
+        $user = $request->user();
+
+        // Delete any existing tokens with the same token value for other users
+        DeviceToken::where('token', $request->token)
+            ->where(function ($query) use ($user) {
+                $query->where('tokenable_type', '!=', User::class)
+                    ->orWhere('tokenable_id', '!=', $user->id);
+            })
+            ->delete();
+
+        // Update or create a token for the authenticated user using polymorphic relationship
         DeviceToken::updateOrCreate(
-            ['user_id' => $request->user()->id], // Find by user ID
             [
-                'token' => $request->token,       // Update the token
-                'type' => $request->type,        // Update type if provided
+                'tokenable_type' => User::class,
+                'tokenable_id' => $user->id,
+            ],
+            [
+                'token' => $request->token,
+                'device_type' => $request->device_type ?? $request->type, // Support both field names
             ]
         );
 

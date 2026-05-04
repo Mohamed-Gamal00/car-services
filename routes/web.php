@@ -26,5 +26,17 @@ Route::get('/payment-package/{package_id}/payment/callback', [\App\Http\Controll
 Route::get('/payment-renewal-subscribe/{package_id}/{method}', [\App\Http\Controllers\Api\PaymentControllerRefactored::class, 'renewal_package_payment_index'])->name('user.renewal_payment_package');
 Route::get('/payment-renewal-subscribe/{package_id}/payment/callback', [\App\Http\Controllers\Api\PaymentControllerRefactored::class, 'renewal_package_callback'])->name('payment.renewal_package_callback');
 
+// Test route to preview email template (remove in production)
+Route::get('/test-email-preview', function () {
+    $order = \App\Models\Order::with(['user', 'car', 'service', 'userPackage.package', 'choices'])
+        ->latest()
+        ->first();
+    
+    if (!$order) {
+        return 'No orders found. Create an order first.';
+    }
+    
+    return view('emails.order-created-admin', ['order' => $order]);
+})->name('test.email.preview');
 
 require __DIR__ . '/dashboard_cleaned.php';
