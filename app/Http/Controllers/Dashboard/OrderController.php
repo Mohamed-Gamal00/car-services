@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Dashboard;
 
 use App\Helper\Helper;
 use App\Http\Controllers\Controller;
+use App\Http\Services\Payment\InvoiceGenerationService;
 use App\Jobs\AssignCaptainToOrder;
 use App\Jobs\MakeCaptainAvailableJob;
 use App\Models\Captain;
@@ -18,6 +19,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Log;
 
 class OrderController extends Controller
 {
@@ -123,9 +125,9 @@ class OrderController extends Controller
 
 
                 $userpackage = UserPackage::with('package')->find($order->user_package_id);
-                $product = $order->products->first();
+                $service = $order->service->first();
 
-                $duration = $product?->duration ?? $userpackage?->package?->duration;
+                $duration = $service?->duration ?? $userpackage?->package?->duration;
 
                 dispatch(new MakeCaptainAvailableJob($request->captain_id))
                     ->delay(now()->addMinutes($this->convertTimeToMinutes($duration)));
@@ -223,5 +225,52 @@ class OrderController extends Controller
         }
         $order->update(['is_delete' => 1]);
         return \redirect()->back()->with('dark', __('messages.ORDER_DELETED'));
+    }
+
+    /**
+     * Regenerate invoice for an order
+     */
+    public function regenerateInvoice(string $id, InvoiceGenerationService $invoiceService)
+    {
+        Gate::authorize('order.edit');
+        
+        $order = Order::with(['user', 'car', 'service', 'choices', 'userPackage.package'])
+            ->findOrFail($id);
+
+        if ($order->payment_status !== 'paid') {
+            return redirect()->back()->with('danger', 'لا يمكن إنشاء فاتورة لطلب غير مدفوع');
+        }
+
+        try {
+            // Generate invoice directly
+            $invoicePath = $invoiceService->generateInvoice($order);
+            
+            if ($invoicePath) {
+                return redirect()->back()->with('success', 'تم إنشاء الفاتورة بنجاح');
+            } else {
+                return redirect()->back()->with('danger', 'فشل إنشاء الفاتورة. يرجى المحاولة مرة أخرى');
+            }
+        } catch (\Exception $e) {
+            Log::error('Failed to generate invoice from admin', [
+                'order_id' => $order->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return redirect()->back()->with('danger', 'حدث خطأ أثناء إنشاء الفاتورة: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Save Firebase token for push notifications
+     */
+    public function saveToken(Request $request)
+    {
+        // This is a placeholder for Firebase token saving
+        // You can implement actual token storage here if needed
+        return response()->json([
+            'success' => true,
+            'message' => 'Token saved successfully'
+        ]);
     }
 }

@@ -65,10 +65,12 @@
                                 <tr data-id="5">
                                     <td data-field="id">{{ $order->number }}</td>
                                     <td>
-                                        @if($order->user->id)
+                                        @if($order->user)
                                             <a href="{{route('clients.edit',$order->user->id)}}">
-                                                {{ $order->user->first_name .' '. $order->user->family_name}}
+                                                {{ $order->user->name}}
                                             </a>
+                                        @else
+                                            <span class="text-muted">-</span>
                                         @endif
 
                                     </td>

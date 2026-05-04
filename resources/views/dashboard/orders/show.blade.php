@@ -19,7 +19,7 @@
 
     <div class="row font-size-20">
         اسم العميل
-        : {{ $order->user->first_name . ' ' . $order->user->family_name }}
+        : {{ $order->user->name }}
 
         - {{ __('profile.ORDER_NUMBER') }} : {{ $order->number . '#' }}
     </div>
@@ -31,21 +31,20 @@
         <div class="col">
             <div class="card">
                 <div class="card-body">
-                    {{--                    <h4 class="card-title mb-4">اسم السيارة :{{ $order->car_name}}</h4>--}}
                     <ol class="activity-feed">
                         <li class="feed-item">
                             <div class="feed-item-list">
-                                <span class="date fw-bold">  اسم السيارة  :  {{ $order->car->current_name_lang }}</span>
+                                <span class="date fw-bold">  اسم السيارة  :  {{ $order->car ? $order->car->current_name : 'غير محدد' }}</span>
                             </div>
                         </li>
                         <li class="feed-item">
                             <div class="feed-item-list">
-                                <span class="date fw-bold">نوع السيارة : {{ $order->car_model }}</span>
+                                <span class="date fw-bold">نوع السيارة : {{ $order->car_model ?? 'غير محدد' }}</span>
                             </div>
                         </li>
                         <li class="feed-item">
                             <div class="feed-item-list">
-                                <span class="date fw-bold">رقم السيارة : {{ $order->car_number ?? '' }}</span>
+                                <span class="date fw-bold">رقم السيارة : {{ $order->car_number ?? 'غير محدد' }}</span>
                             </div>
                         </li>
                         <li class="feed-item">
@@ -59,22 +58,32 @@
                             <div class="feed-item-list">
                                     <span class="date fw-bold">
                                         اسم الخدمة/الباقة :
-                                        {{ $order->products->first()->name
-                                            ?? $order->userPackage?->package?->getCurrentNameLangAttribute()
+                                        {{ $order->service?->getCurrentNameAttribute()
+                                            ?? $order->userPackage?->package?->getCurrentNameAttribute()
                                             ?? 'غير محدد' }}
                                     </span>
                             </div>
+                        </li>
 
 
                         <li class="feed-item">
                             <div class="feed-item-list">
-                                <span class="date fw-bold">وقت الخدمة/الصلاحية : {{$order->products->first()->duration ?? $order->userPackage->package->validity_days ?? 'غير محدد' . 'يوم' }}</span>
+                                <span class="date fw-bold">
+                                    وقت الخدمة/الصلاحية : 
+                                    {{ $order->service?->duration 
+                                        ?? ($order->userPackage?->package?->validity_days ? $order->userPackage->package->validity_days . ' يوم' : 'غير محدد') }}
+                                </span>
                             </div>
                         </li>
 
                         <li class="feed-item">
                             <div class="feed-item-list">
-                                <span class="date fw-bold">سعر الخدمة/الباقة : {{$order->products->first()->price ?? $order->userPackage->package->price ?? 'غير محدد'  }}</span>
+                                <span class="date fw-bold">
+                                    سعر الخدمة/الباقة : 
+                                    {{ $order->service?->price 
+                                        ?? $order->userPackage?->package?->price 
+                                        ?? 'غير محدد' }}
+                                </span>
                             </div>
                         </li>
 
@@ -98,21 +107,6 @@
                         @empty
                             <p></p>
                         @endforelse
-
-                        {{--                        <li class="feed-item">--}}
-                        {{--                            <div class="feed-item-list">--}}
-                        {{--                                    <span class="date fw-bold">السعر :--}}
-                        {{--                                                                        {{ resolve('App\currency\Currency')->getCurrency($order->price) }}</span>--}}
-                        {{--                            </div>--}}
-                        {{--                        </li>--}}
-
-
-                        {{--                        <li class="feed-item">--}}
-                        {{--                            <div class="feed-item-list">--}}
-                        {{--                                <img class="img-thumbnail rounded me-2" alt="200x200" width="200"--}}
-                        {{--                                                                         src="{{ $item->product->image_url }}" data-holder-rendered="true">--}}
-                        {{--                            </div>--}}
-                        {{--                        </li>--}}
                     </ol>
 
                 </div>
@@ -125,12 +119,12 @@
         <div class="col">
             <div class="card">
                 <div class="card-body">
-                    @if($order->location && $order->latitude && $order->longitude)
+                    @if( $order->latitude && $order->longitude)
                         <h4 class="card-title mb-4">العنوان</h4>
                         <ol class="activity-feed">
                             <li class="feed-item">
                                 <div class="feed-item-list">
-                                    <span class="activity-text fw-bold">{{ $order->location }}</span>
+                                    <span class="activity-text fw-bold">{{ $order->address }}</span>
                                 </div>
                             </li>
                             <div style="height: 400px;" id="map"></div>
@@ -240,46 +234,16 @@
                             <div class="feed-item-list">
                                 <span class="date">اسم العميل : </span>
                                 <span
-                                        class="activity-text fw-bold">{{ $order->user->first_name . ' ' . $order->user->family_name }}</span>
+                                        class="activity-text fw-bold">{{ $order->user->name }}</span>
                             </div>
                         </li>
 
                         <li class="feed-item">
                             <div class="feed-item-list">
                                 <span class="date">رقم الجوال: </span>
-                                <span class="activity-text fw-bold">{{ "{$order->user->phone_number}" }}
+                                <span class="activity-text fw-bold">{{ "{$order->user->phone}" }}
                             </div>
                         </li>
-
-                        {{--                        <li class="feed-item">--}}
-                        {{--                            <div class="feed-item-list">--}}
-                        {{--                                <span class="date">البريد الالكتروني</span>--}}
-                        {{--                                <span class="activity-text fw-bold">{{ $order->addresses->first()->email }}</span>--}}
-                        {{--                            </div>--}}
-                        {{--                        </li>--}}
-
-
-                        {{--                        <li class="feed-item">--}}
-                        {{--                            <div class="feed-item-list">--}}
-                        {{--                                <span class="date">الدولة</span>--}}
-                        {{--                                <span--}}
-                        {{--                                        class="activity-text fw-bold">{{ $order->addresses->first()->country->name_ar }}</span>--}}
-                        {{--                            </div>--}}
-                        {{--                        </li>--}}
-
-                        {{--                        <li class="feed-item">--}}
-                        {{--                            <div class="feed-item-list">--}}
-                        {{--                                <span class="date">المدينة</span>--}}
-                        {{--                                <span class="activity-text fw-bold">{{ $order->addresses->first()->city->name_ar }}</span>--}}
-                        {{--                            </div>--}}
-                        {{--                        </li>--}}
-
-                        {{--                        <li class="feed-item">--}}
-                        {{--                            <div class="feed-item-list">--}}
-                        {{--                                <span class="date">العنوان</span>--}}
-                        {{--                                <span class="activity-text fw-bold">{{ $order->addresses->first()->address }}</span>--}}
-                        {{--                            </div>--}}
-                        {{--                        </li>--}}
 
                         <li class="feed-item">
                             <div class="feed-item-list">
@@ -289,28 +253,29 @@
                             </div>
                         </li>
 
-                        {{--                        <li class="feed-item">--}}
-                        {{--                            <div class="feed-item-list">--}}
-                        {{--                                <span class="date">ملاحظات</span>--}}
-                        {{--                                <span class="activity-text fw-bold">{{ $order->note ?? 'لا يوجد ملاحظات' }}</span>--}}
-                        {{--                            </div>--}}
-                        {{--                        </li>--}}
-
+                        <li class="feed-item">
+                            <div class="feed-item-list">
+                                <span class="date">الفاتورة</span>
+                                @if($order->invoice_url)
+                                    <a href="{{ asset('storage/' . $order->invoice_url) }}" 
+                                       target="_blank" 
+                                       class="btn btn-sm btn-success">
+                                        <i class="fas fa-file-pdf"></i> تحميل الفاتورة
+                                    </a>
+                                @else
+                                    <span class="text-muted">لم يتم إنشاء الفاتورة بعد</span>
+                                    @if($order->payment_status == 'paid')
+                                        <form action="{{ route('orders.regenerate-invoice', $order->id) }}" method="post" class="d-inline">
+                                            @csrf
+                                            <button type="submit" class="btn btn-sm btn-primary">
+                                                <i class="fas fa-sync"></i> إنشاء الفاتورة
+                                            </button>
+                                        </form>
+                                    @endif
+                                @endif
+                            </div>
+                        </li>
                     </ol>
-                    {{--                    @if ($order->shipping_price)--}}
-                    {{--                        <h5>--}}
-                    {{--                            الاجمالي :--}}
-                    {{--                            --}}{{-- <span>{{ resolve('App\currency\Currency')->getCurrency($order->orderItems->sum('price')) }}</span> --}}
-                    {{--                            <span>{{ resolve('App\currency\Currency')->getCurrency($order->total_price + intval($order->shipping_price)) }}</span>--}}
-                    {{--                        </h5>--}}
-                    {{--                    @else--}}
-                    {{--                        <h5>--}}
-                    {{--                            الاجمالي :--}}
-                    {{--                            --}}{{-- <span>{{ resolve('App\currency\Currency')->getCurrency($order->orderItems->sum('price')) }} قبل الخصك</span> --}}
-                    {{--                            <span>{{ resolve('App\currency\Currency')->getCurrency($order->total_price) }}</span>--}}
-                    {{--                        </h5>--}}
-                    {{--                        </h5>--}}
-                    {{--                    @endif--}}
 
                 </div>
             </div>
@@ -354,7 +319,7 @@
                     الطلب</label>
                 <select class="form-select" name="order_status_id" id="validationCustom04" required>
                     @forelse($orderStatus as $status)
-                        <option value="{{ $status->id }}" @selected($order->order_status_id == $status->id)>{{ $status->CurrentNameLang }}
+                        <option value="{{ $status->id }}" @selected($order->order_status_id == $status->id)>{{ $status->CurrentName }}
                         </option>
                     @empty
                     @endforelse

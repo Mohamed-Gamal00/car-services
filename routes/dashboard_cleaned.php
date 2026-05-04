@@ -89,6 +89,10 @@ Route::group(['prefix' => 'dashboard', 'middleware' => 'admin'], function () {
     Route::put('/orders/{id}/update', [OrderController::class, 'update'])->name('orders.update');
     Route::put('/orders/{id}/assignCaptain', [OrderController::class, 'assignCaptain'])->name('orders.assignCaptain');
     Route::delete('/orders/{id}/delete', [OrderController::class, 'destroy'])->name('orders.destroy');
+    Route::post('/orders/{id}/regenerate-invoice', [OrderController::class, 'regenerateInvoice'])->name('orders.regenerate-invoice');
+    
+    // Firebase token for notifications
+    Route::post('/save-token', [OrderController::class, 'saveToken'])->name('save-token');
 
     //-----------------------------------------------------------------------------/ Order Statuses
     Route::get('/order_status/arranging', [OrderStatusController::class, 'orderArrangement'])->name('order_status.arranging');

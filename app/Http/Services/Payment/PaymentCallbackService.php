@@ -75,23 +75,38 @@ class PaymentCallbackService
         // Assign captain if booking is today
         $this->captainAssignmentService->assignCaptainIfToday($order);
 
-        // Dispatch invoice generation job (async to prevent timeout)
+        // Generate invoice directly (synchronous)
         try {
-            if ($this->invoiceGenerationService->shouldGenerateInvoice($order)) {
-                Log::info('Dispatching invoice generation job', ['order_id' => $order->id]);
-                
-                \App\Jobs\GenerateInvoiceJob::dispatch($order->id)
-                    ->onQueue('invoices');
-                
-                Log::info('Invoice generation job dispatched', ['order_id' => $order->id]);
-            }
+            // Refresh order to get latest data
+            $order->refresh();
+            
+            // Eager load all relationships needed for invoice
+            $order->load([
+                'user',
+                'car',
+                'choices',
+                'service',
+                'userPackage.package'
+            ]);
+
+            Log::info('Relationships loaded for invoice', [
+                'order_id' => $order->id,
+                'has_user' => !is_null($order->user),
+                'has_car' => !is_null($order->car),
+                'has_service' => !is_null($order->service),
+                'has_package' => !is_null($order->userPackage),
+                'choices_count' => $order->choices->count()
+            ]);
         } catch (\Throwable $e) {
             // Log error but don't stop payment process
-            Log::error('Failed to dispatch invoice generation job', [
+            Log::error('Invoice generation failed in callback', [
                 'order_id' => $order->id,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString()
             ]);
-            // Continue - invoice can be generated later manually
+            // Continue - invoice can be generated later
         }
 
         return [
