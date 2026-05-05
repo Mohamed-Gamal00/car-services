@@ -78,15 +78,15 @@ class CheckoutService
         $workEndTime = $setting->working_end_time;
 
         // Convert the work start and end times to timestamps for comparison
-        $workStartTimeStamp = strtotime($workStartTime);
-        $workEndTimeStamp = strtotime($workEndTime);
+        $workStartTimeStamp = $workStartTime;
+        $workEndTimeStamp = $workEndTime;
 
         $bookingTime = $request->booking_time;
         // new
         $bookingDate = $request->booking_date;
-        $bookingDateTime = strtotime($bookingDate . ' ' . $bookingTime); // Full timestamp
+        $bookingDateTime = $bookingDate . ' ' . $bookingTime; // Full timestamp
 
-        $bookingTimeStamp = strtotime($bookingTime);
+        $bookingTimeStamp = $bookingTime;
 
         if ($bookingTimeStamp < $workStartTimeStamp || $bookingTimeStamp > $workEndTimeStamp) {
             throw new \Exception(translateWithHTMLTags('وقت الحجز غير صالح. يجب أن يكون من ') . $workStartTime . ' : ' . $workEndTime . '.', 422);

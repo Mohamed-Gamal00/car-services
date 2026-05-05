@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\UserAuthController;
 use App\Http\Controllers\ContactUsController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\CheckoutController;
+use App\Http\Controllers\Api\CheckoutControllerRefactored;
 use App\Http\Controllers\Api\StaticPagesController;
 use App\Http\Controllers\Api\PackageController;
 
@@ -61,7 +62,7 @@ Route::middleware(['changeLanguage'])->group(function () {
         #-------------------------------------- Checkout --------------------------------------------
 //        Route::post('/checkout/{service_id}', [CheckoutController::class, 'usercheckout']);
 //        Route::post('/checkout_with_package', [CheckoutController::class, 'checkout_with_package']);
-        Route::post('/checkout/{service_id?}', [CheckoutController::class, 'usercheckout']);
+        Route::post('/checkout/{service_id?}', [CheckoutControllerRefactored::class, 'checkout']);
         Route::post('/check-coupon', [CheckoutController::class, 'checkCoupon']);
         Route::post('/apply-coupon/{orderId}', [CheckoutController::class, 'applyCoupon']);
         Route::post('/cancel-coupon/{orderId}', [CheckoutController::class, 'cancelCoupon']);
