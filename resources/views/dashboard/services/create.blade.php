@@ -102,9 +102,12 @@
 
                                         <div class="mb-3">
                                             <label class="form-label fw-bold">المدة <span class="text-danger">*</span></label>
-                                            <input type="text" class="form-control @error('duration') is-invalid @enderror" 
-                                                   name="duration" value="{{ old('duration', '01:00') }}" 
-                                                   placeholder="01:30" required pattern="[0-9]{2}:[0-5][0-9]">
+                                            <input type="text" 
+                                                   class="form-control @error('duration') is-invalid @enderror" 
+                                                   name="duration" 
+                                                   value="{{ old('duration', '01:00') }}" 
+                                                   placeholder="01:30" 
+                                                   required 
                                             <small class="text-muted">الصيغة: HH:MM (مثال: 01:30 = ساعة ونصف)</small>
                                             @error('duration')
                                                 <div class="invalid-feedback">{{ $message }}</div>
