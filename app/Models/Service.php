@@ -26,6 +26,8 @@ class Service extends Model
     protected $casts = [
         'price' => 'decimal:2',
         'is_active' => 'boolean',
+        'duration' => \App\Casts\DurationCast::class,
+
     ];
 
     // Relationships

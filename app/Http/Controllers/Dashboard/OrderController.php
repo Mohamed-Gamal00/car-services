@@ -40,7 +40,7 @@ class OrderController extends Controller
         Gate::authorize('order.view');
 
         $orders = $this->orderRepository->getAll();
-//        dd($orders);
+        //        dd($orders);
         $defaultOrderStatus = OrderStatus::where('default_status', true)->first();
         $OrderStatus = OrderStatus::all();
         $user = Auth::guard('admin')->user();
@@ -49,21 +49,6 @@ class OrderController extends Controller
         return view('dashboard.orders.index', compact('orders', 'defaultOrderStatus', 'notifications', 'OrderStatus'));
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        //
-    }
 
     /**
      * Display the specified resource.
@@ -73,21 +58,12 @@ class OrderController extends Controller
         Gate::authorize('order.edit');
 
         $availableCaptains = Captain::where('status', 'available')->where('is_active', 1)->get();
-//        dd($availableCaptains);
 
         $order = $this->orderRepository->show($id);
         $orderPackage = $order->package;
 
         $orderStatus = OrderStatus::all();
         return view('dashboard.orders.show', compact('order', 'orderStatus', 'availableCaptains'));
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
-    {
-        //
     }
 
     public function assignCaptain(Request $request, string $id)
@@ -115,13 +91,13 @@ class OrderController extends Controller
                 $deviceTokens = $captain->devicetokens()->pluck('token');
                 app()->setLocale($captain->lang ?? 'ar');
 
-                $title = __('general.new_notification');
-                $body = __('general.There_is_a_new_request_for_you');
-                $tokens = $deviceTokens;
-                $data = [
-                    'order_id' => 'order',
-                ];
-                $this->notifyByFirebase($title, $body, $tokens, $data);
+                // $title = __('general.new_notification');
+                // $body = __('general.There_is_a_new_request_for_you');
+                // $tokens = $deviceTokens;
+                // $data = [
+                //     'order_id' => 'order',
+                // ];
+                // $this->notifyByFirebase($title, $body, $tokens, $data);
 
 
                 $userpackage = UserPackage::with('package')->find($order->user_package_id);
@@ -139,9 +115,7 @@ class OrderController extends Controller
             return \redirect()->route('orders.index')->with('success', __('messages.ORDER_STATUS_UPDATED'));
         } else {
             return \redirect()->route('orders.index')->with('danger', 'خطأ اثناء تعيين الكابتن');
-
         }
-
     }
 
     /*test send notification*/
@@ -153,7 +127,7 @@ class OrderController extends Controller
         $request->validate([
             'order_status_id' => 'required|exists:order_statuses,id'
         ]);
-//        dd($request->order_status_id);
+        //        dd($request->order_status_id);
         $order = Order::findOrFail($id);
         if ($order->payment_status != 'paid' && $request->order_status_id == 4) {
             return \redirect()->route('orders.index')->with('danger', 'لا يمكنك انهاء الطلب لانه غير مدفوع');
@@ -162,7 +136,7 @@ class OrderController extends Controller
             return \redirect()->route('orders.index')->with('danger', 'هذا الطلب بدون كابتن');
         }
 
-//        dd($request->all());
+        //        dd($request->all());
 
         $this->orderRepository->update($request, $order);
 
@@ -233,7 +207,7 @@ class OrderController extends Controller
     public function regenerateInvoice(string $id, InvoiceGenerationService $invoiceService)
     {
         Gate::authorize('order.edit');
-        
+
         $order = Order::with(['user', 'car', 'service', 'choices', 'userPackage.package'])
             ->findOrFail($id);
 
@@ -244,7 +218,7 @@ class OrderController extends Controller
         try {
             // Generate invoice directly
             $invoicePath = $invoiceService->generateInvoice($order);
-            
+
             if ($invoicePath) {
                 return redirect()->back()->with('success', 'تم إنشاء الفاتورة بنجاح');
             } else {
@@ -256,7 +230,7 @@ class OrderController extends Controller
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-            
+
             return redirect()->back()->with('danger', 'حدث خطأ أثناء إنشاء الفاتورة: ' . $e->getMessage());
         }
     }

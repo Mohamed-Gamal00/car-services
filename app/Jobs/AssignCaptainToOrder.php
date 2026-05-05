@@ -5,12 +5,12 @@ namespace App\Jobs;
 use App\Helper\Helper;
 use App\Models\Captain;
 use App\Models\Order;
-use App\Models\UserPackage;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Log;
 
 class AssignCaptainToOrder implements ShouldQueue
@@ -43,18 +43,25 @@ class AssignCaptainToOrder implements ShouldQueue
                 $captain->update(['status' => 'busy']);
 
                 // Send notification to captain
-                $this->sendCaptainNotification($captain, $order);
+                // $this->sendCaptainNotification($captain, $order);
 
                 // Schedule captain to be available after service duration
-                $duration = $order->getServiceDuration();
+                $duration = $order->service?->duration ?? $order->userPackage?->package?->duration ?? '01:00';
+                
                 MakeCaptainAvailableJob::dispatch($captain->id)
-                    ->delay(now()->addMinutes($duration));
+                    ->delay(now()->addMinutes($this->convertTimeToMinutes($duration)));
 
                 Log::info("Assigned Captain ID {$captain->id} to Order ID {$order->id}");
+            } else {
+                // No available captain, break the loop
+                break;
             }
         }
     }
 
+    /**
+     * Send notification to captain about new order
+     */
     private function sendCaptainNotification($captain, $order)
     {
         app()->setLocale($captain->preferred_language ?? 'ar');
@@ -73,24 +80,15 @@ class AssignCaptainToOrder implements ShouldQueue
             Log::error('No device tokens for captain', ['captain_id' => $captain->id]);
         }
     }
+
+    /**
+     * Convert duration string (HH:MM) to minutes
+     */
+private function convertTimeToMinutes($duration)
+{
+    $time = Carbon::createFromFormat('H:i:s', $duration);
+
+    return ($time->hour * 60) + $time->minute;
 }
-                    ->delay(now()->addMinutes($this->convertTimeToMinutes($duration)));
-
-//                MakeCaptainAvailableJob::dispatch($captain->id)
-//                    ->delay(now()->addMinutes($this->convertTimeToMinutes($order->products->first()->duration)));
-
-
-            } else {
-                break;
-            }
-        }
-
-    }
-
-    // Helper function to convert duration to minutes
-    private function convertTimeToMinutes($duration)
-    {
-        list($hours, $minutes) = explode(':', $duration);
-        return ($hours * 60) + $minutes;
-    }
 }
+
