@@ -1,13 +1,6 @@
 @extends('dashboard.index')
 @section('title', ' البيانات')
-@push('styles')
-    <!-- Bootstrap datatable js -->
-    <link href="{{ asset('assets/libs/datatables.net-bs4/css/dataTables.bootstrap4.min.css') }}" rel="stylesheet"
-          type="text/css">
-    <link href="{{ asset('assets/libs/datatables.net-buttons-bs4/css/buttons.bootstrap4.min.css') }}" rel="stylesheet"
-          type="text/css">
 
-@endpush
 @section('breadcrumb')
     @parent
     <li class="breadcrumb-item"><a href="{{route('captains.index')}}">الموظفين</a></li>
@@ -15,260 +8,250 @@
 @endsection
 
 @section('section')
+    <style>
+        .profile-card { border: none; box-shadow: 0 2px 12px rgba(0,0,0,0.08); border-radius: 16px; overflow: hidden; }
+        .profile-header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px 20px 80px; position: relative; }
+        .profile-avatar { width: 120px; height: 120px; border: 5px solid white; border-radius: 50%; margin: 0 auto; display: block; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+        .profile-name { font-size: 1.5rem; font-weight: 700; color: #2c3e50; margin-top: 15px; }
+        .profile-status { display: inline-block; padding: 6px 16px; border-radius: 20px; font-size: 0.9rem; font-weight: 600; }
+        .status-available { background: #d4edda; color: #155724; }
+        .status-busy { background: #f8d7da; color: #721c24; }
+        .profile-stats { border-top: 2px solid #f0f0f0; padding-top: 20px; margin-top: 20px; }
+        .stat-item { text-align: center; }
+        .stat-value { font-size: 1.8rem; font-weight: 700; color: #667eea; margin-bottom: 5px; }
+        .stat-label { color: #6c757d; font-size: 0.9rem; }
+        .section-card { border: none; box-shadow: 0 2px 8px rgba(0,0,0,0.06); border-radius: 12px; margin-bottom: 25px; }
+        .section-header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 20px; border-radius: 12px 12px 0 0; display: flex; align-items: center; gap: 10px; }
+        .section-header i { font-size: 1.5rem; }
+        .section-header h5 { margin: 0; font-weight: 600; }
+        .table-modern { margin-bottom: 0; }
+        .table-modern thead th { background: #f8f9fa; color: #495057; font-weight: 600; border: none; padding: 15px; }
+        .table-modern tbody tr { transition: all 0.3s; border-bottom: 1px solid #f0f0f0; }
+        .table-modern tbody tr:hover { background: #f8f9fa; transform: translateX(-3px); }
+        .table-modern tbody td { padding: 15px; vertical-align: middle; border: none; }
+        .btn-view { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 8px 20px; border-radius: 20px; font-size: 0.85rem; transition: all 0.3s; }
+        .btn-view:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4); color: white; }
+        .status-badge { padding: 6px 14px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; }
+        .status-badge i { font-size: 1rem; }
+        .empty-state { text-align: center; padding: 40px 20px; color: #6c757d; }
+        .empty-state i { font-size: 3rem; opacity: 0.3; margin-bottom: 15px; }
+        .current-order-card { background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-radius: 12px; padding: 20px; }
+        .avatar-circle { width: 35px; height: 35px; border-radius: 50%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; display: inline-flex; align-items: center; justify-content: center; font-weight: 600; font-size: 0.9rem; }
+    </style>
 
     <div class="row">
-        <div class="col-xl-4">
-            <div class="user-sidebar">
-                <div class="card" style="background-color: #f8f9fa">
-                    <div class="card-body p-1">
+        <!-- Profile Sidebar -->
+        <div class="col-xl-4 col-lg-5">
+            <div class="card profile-card sticky-top" style="top: 20px;">
+                <div class="profile-header"></div>
+                <div class="card-body text-center" style="margin-top: -60px;">
+                    <img src="{{ $captain->image_url }}" alt="{{$captain->name}}" class="profile-avatar">
+                    
+                    <h4 class="profile-name">{{$captain->name}} {{$captain->last_name}}</h4>
+                    
+                    <span class="profile-status {{ $captain->status == 'available' ? 'status-available' : 'status-busy' }}">
+                        <i class="mdi mdi-{{ $captain->status == 'available' ? 'check-circle' : 'clock-alert' }}"></i>
+                        {{$captain->status == 'available' ? 'متاح' : 'مشغول'}}
+                    </span>
 
-                        <div class="mt-n4 position-relative">
-                            <div class="text-center">
-                                <img src="{{ $captain->image_url }}" alt=""
-                                     class="avatar-xl rounded-circle img-thumbnail">
-
-                                <div class="mt-3">
-                                    <h5 class="">{{$captain->name}}  {{$captain->last_name}}</h5>
-                                    <div>
-                                        <a href="#"
-                                           class="text-muted m-1">{{$captain->status == 'available' ? 'متاح' : 'مشغول' }}</a>
-                                    </div>
-
+                    <div class="profile-stats">
+                        <div class="row">
+                            <div class="col-6 stat-item">
+                                <div class="stat-value">{{count($completed_orders)}}</div>
+                                <div class="stat-label">الطلبات المكتملة</div>
+                            </div>
+                            <div class="col-6 stat-item">
+                                <div class="stat-value">
+                                    <i class="mdi mdi-phone" style="font-size: 1.2rem;"></i>
                                 </div>
-
+                                <div class="stat-label">{{$captain->phone_number}}</div>
                             </div>
                         </div>
-
-                        <div class="p-3 mt-3">
-                            <div class="row text-center">
-                                <div class="col-6 border-end">
-                                    <div class="p-1">
-                                        <h5 class="mb-1">{{count($completed_orders)}}</h5>
-                                        <p class="text-muted mb-0">الطلبات المكتملة</p>
-                                    </div>
-                                </div>
-                                <div class="col-6">
-                                    <div class="p-1">
-                                        <h5 class="mb-1">{{$captain->phone_number}}</h5>
-                                        <p class="text-muted mb-0">رقم الجوال</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {{--                        <div>--}}
-                        {{--                            <p class="text-center fw-bold">--}}
-                        {{--                                <a href="{{ route('captain.rating', $captain->id) }}">التقييم</a>--}}
-                        {{--                            </p>--}}
-                        {{--                        </div>--}}
-                    </div> <!-- end card body -->
-                </div> <!-- end card -->
+                    </div>
+                </div>
             </div>
         </div>
 
-        <div class="col-xl-8">
-            <div class="tab-pane active" id="about" role="tabpanel">
-                <div>
-
-                    <div>
-                        <h5 class="font-size-16 mb-4">الطلبات المكتملة</h5>
-                        <div class="table-responsive mt-2">
-
-                            <table
-                                    class="table table-editable table-nowrap align-middle table-edits table-striped table-bordered mt-2"
-                                    id="datatable">
-                                <thead>
+        <!-- Main Content -->
+        <div class="col-xl-8 col-lg-7">
+            <!-- Completed Orders -->
+            <div class="card section-card">
+                <div class="section-header">
+                    <i class="mdi mdi-check-circle"></i>
+                    <h5>الطلبات المكتملة</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-modern">
+                            <thead>
                                 <tr>
-                                    <th class="fw-bold">رقم الطلب</th>
-                                    <th class="fw-bold">اسم العميل</th>
-                                    <th class="fw-bold">تاريخ الطلب</th>
-                                    <th class="fw-bold">مشاهدة</th>
+                                    <th>رقم الطلب</th>
+                                    <th>اسم العميل</th>
+                                    <th>تاريخ الطلب</th>
+                                    <th class="text-center">الإجراءات</th>
                                 </tr>
-                                </thead>
-
-
-                                <tbody>
+                            </thead>
+                            <tbody>
                                 @forelse ($completed_orders as $order)
-                                    <tr data-id="5">
-                                        <td data-field="id">{{ $order->number }}</td>
-                                        <td>{{ $order->user->first_name }}</td>
-                                        {{-- <td data-field="id">{{ $order->addresses->first()->first_name }} {{ $order->addresses->first()->last_name }}</td> --}}
-
-                                        <td data-field="id">{{ $order->created_at}}</td>
-
-
-                                        <td style="width: 2%;text-align-last: center;">
-                                            <a href="{{ route('orders.show', $order->id) }}"
-                                               class="btn btn-secondary btn-sm edit" title="مشاهدة">
-                                                <i class="ion ion-md-eye"></i>
+                                    <tr>
+                                        <td><strong>#{{ $order->number }}</strong></td>
+                                        <td>
+                                            <div class="d-flex align-items-center gap-2">
+                                                <div class="avatar-circle">{{ substr($order->user->first_name, 0, 1) }}</div>
+                                                {{ $order->user->first_name }}
+                                            </div>
+                                        </td>
+                                        <td>{{ $order->created_at->format('Y-m-d') }}</td>
+                                        <td class="text-center">
+                                            <a href="{{ route('orders.show', $order->id) }}" class="btn btn-view">
+                                                <i class="mdi mdi-eye"></i> مشاهدة
                                             </a>
-                                        @empty
-                                            <td colspan="10">
-                                                لا يوجد طلبات لعرضها
-                                            </td>
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="4">
+                                            <div class="empty-state">
+                                                <i class="mdi mdi-package-variant"></i>
+                                                <p class="mb-0">لا يوجد طلبات مكتملة</p>
+                                            </div>
+                                        </td>
                                     </tr>
                                 @endforelse
-                            </table>
-                            <!-- end table -->
-                            {{ $completed_orders->withQueryString()->links() }}
-                        </div>
+                            </tbody>
+                        </table>
                     </div>
-
-
-                    <div>
-                        <h5 class="font-size-16 mb-4">الطلبات الحالية</h5>
-                        <div class="table-responsive mt-2">
-
-                            <table
-                                    class="table table-editable table-nowrap align-middle table-edits table-striped table-bordered mt-2"
-                                    id="datatabless">
-                                <thead>
-                                <tr>
-                                    <th class="fw-bold">رقم الطلب</th>
-                                    <th class="fw-bold">اسم العميل</th>
-                                    <th class="fw-bold">تاريخ الطلب</th>
-                                    <th class="fw-bold">مشاهدة</th>
-                                </tr>
-                                </thead>
-
-
-                                <tbody>
-                                <tr data-id="5">
-                                    @if($current_order)
-                                        <td data-field="id">{{ $current_order->number }}</td>
-                                        <td>{{ $current_order->user->first_name }}</td>
-                                        {{-- <td data-field="id">{{ $current_order->addresses->first()->first_name }} {{ $current_order->addresses->first()->last_name }}</td> --}}
-
-                                        <td data-field="id">{{ $current_order->created_at}}</td>
-
-
-                                        <td style="width: 2%;text-align-last: center;">
-                                            <a href="{{ route('orders.show', $current_order->id) }}"
-                                               class="btn btn-secondary btn-sm edit" title="مشاهدة">
-                                                <i class="ion ion-md-eye"></i>
-                                            </a>
-                                        </td>
-                                    @else
-                                        <td colspan="10">
-                                            لا يوجد طلبات لعرضها
-                                        </td>
-
-                                    @endif
-                                </tr>
-                            </table>
-                            <!-- end table -->
-                        </div>
+                </div>
+                @if($completed_orders->hasPages())
+                    <div class="card-footer bg-white border-top-0">
+                        {{ $completed_orders->withQueryString()->links() }}
                     </div>
+                @endif
+            </div>
 
-
-                    <div>
-                        <h5 class="font-size-16 mb-4">قائمة الانتظار</h5>
-                        <div class="table-responsive mt-2">
-
-                            <table
-                                    class="table table-editable table-nowrap align-middle table-edits table-striped table-bordered mt-2"
-                                    id="datatable">
-                                <thead>
-                                <tr>
-                                    <th class="fw-bold">رقم الطلب</th>
-                                    <th class="fw-bold">اسم العميل</th>
-                                    <th class="fw-bold">تاريخ الطلب</th>
-                                    <th class="fw-bold">الطلب</th>
-                                    <th class="fw-bold">مشاهدة</th>
-                                </tr>
-                                </thead>
-
-
-                                <tbody>
-                                @forelse ($wating_list as $order)
-                                    <tr data-id="5">
-                                        <td data-field="id">{{ $order->number }}</td>
-                                        <td>{{ $order->user->first_name }}</td>
-                                        {{-- <td data-field="id">{{ $order->addresses->first()->first_name }} {{ $order->addresses->first()->last_name }}</td> --}}
-
-                                        <td data-field="id">{{ $order->created_at}}</td>
-                                        <td data-field="id" style="width: 8%;">
-                                            @if ($order->order_status_id  == 4)
-                                                <span class="badge bg-success"
-                                                      style="font-size: 13px">{{ $order->orderStatus->name }}</span>
-                                            @elseif($order->order_status_id  == 2 )
-                                                <span class="badge bg-warning"
-                                                      style="font-size: 13px">{{ $order->orderStatus->name }}
-                                            </span>
-                                            @elseif($order->order_status_id  == 3 )
-                                                <span class="badge bg-purple"
-                                                      style="font-size: 13px">{{ $order->orderStatus->name }}
-                                            </span>
-                                            @elseif($order->order_status_id  == 11 )
-                                                <span class="badge bg-danger"
-                                                      style="font-size: 13px">{{ $order->orderStatus->name }}
-                                            </span>
-                                            @elseif($order->order_status_id  == 12 )
-                                                <span class="badge bg-primary"
-                                                      style="font-size: 13px">{{ $order->orderStatus->name }}
-                                            </span>
-
-                                            @else
-                                                ---
-                                            @endif
-                                        </td>
-
-                                        <td style="width: 2%;text-align-last: center;">
-                                            <a href="{{ route('orders.show', $order->id) }}"
-                                               class="btn btn-secondary btn-sm edit" title="مشاهدة">
-                                                <i class="ion ion-md-eye"></i>
-                                            </a>
-                                        @empty
-                                            <td colspan="10">
-                                                لا يوجد طلبات لعرضها
-                                            </td>
-                                    </tr>
-                                @endforelse
-                            </table>
-                            <!-- end table -->
-                            {{ $wating_list->withQueryString()->links() }}
+            <!-- Current Order -->
+            <div class="card section-card">
+                <div class="section-header">
+                    <i class="mdi mdi-truck-fast"></i>
+                    <h5>الطلب الحالي</h5>
+                </div>
+                <div class="card-body">
+                    @if($current_order)
+                        <div class="current-order-card">
+                            <div class="row align-items-center">
+                                <div class="col-md-3">
+                                    <div class="text-center">
+                                        <i class="mdi mdi-package-variant" style="font-size: 3rem; color: #667eea;"></i>
+                                        <h5 class="mt-2 mb-0">#{{ $current_order->number }}</h5>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div>
+                                        <p class="mb-2"><strong>العميل:</strong> {{ $current_order->user->first_name }}</p>
+                                        <p class="mb-0"><strong>التاريخ:</strong> {{ $current_order->created_at->format('Y-m-d H:i') }}</p>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 text-center">
+                                    <a href="{{ route('orders.show', $current_order->id) }}" class="btn btn-view">
+                                        <i class="mdi mdi-eye"></i> مشاهدة
+                                    </a>
+                                </div>
+                            </div>
                         </div>
-                    </div>
-
+                    @else
+                        <div class="empty-state">
+                            <i class="mdi mdi-truck-fast"></i>
+                            <p class="mb-0">لا يوجد طلب حالي</p>
+                        </div>
+                    @endif
                 </div>
             </div>
 
+            <!-- Waiting List -->
+            <div class="card section-card">
+                <div class="section-header">
+                    <i class="mdi mdi-clock-outline"></i>
+                    <h5>قائمة الانتظار</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-modern">
+                            <thead>
+                                <tr>
+                                    <th>رقم الطلب</th>
+                                    <th>اسم العميل</th>
+                                    <th>تاريخ الطلب</th>
+                                    <th>الحالة</th>
+                                    <th class="text-center">الإجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse ($wating_list as $order)
+                                    <tr>
+                                        <td><strong>#{{ $order->number }}</strong></td>
+                                        <td>
+                                            <div class="d-flex align-items-center gap-2">
+                                                <div class="avatar-circle">{{ substr($order->user->first_name, 0, 1) }}</div>
+                                                {{ $order->user->first_name }}
+                                            </div>
+                                        </td>
+                                        <td>{{ $order->created_at->format('Y-m-d') }}</td>
+                                        <td>
+                                            @if ($order->order_status_id == 4)
+                                                <span class="status-badge" style="background: #d4edda; color: #155724;">
+                                                    <i class="mdi mdi-check-circle"></i>
+                                                    {{ $order->orderStatus->name }}
+                                                </span>
+                                            @elseif($order->order_status_id == 2)
+                                                <span class="status-badge" style="background: #fff3cd; color: #856404;">
+                                                    <i class="mdi mdi-clock-alert"></i>
+                                                    {{ $order->orderStatus->name }}
+                                                </span>
+                                            @elseif($order->order_status_id == 3)
+                                                <span class="status-badge" style="background: #e2d5f5; color: #5a2d82;">
+                                                    <i class="mdi mdi-progress-clock"></i>
+                                                    {{ $order->orderStatus->name }}
+                                                </span>
+                                            @elseif($order->order_status_id == 11)
+                                                <span class="status-badge" style="background: #f8d7da; color: #721c24;">
+                                                    <i class="mdi mdi-close-circle"></i>
+                                                    {{ $order->orderStatus->name }}
+                                                </span>
+                                            @elseif($order->order_status_id == 12)
+                                                <span class="status-badge" style="background: #cfe2ff; color: #084298;">
+                                                    <i class="mdi mdi-information"></i>
+                                                    {{ $order->orderStatus->name }}
+                                                </span>
+                                            @else
+                                                <span class="text-muted">---</span>
+                                            @endif
+                                        </td>
+                                        <td class="text-center">
+                                            <a href="{{ route('orders.show', $order->id) }}" class="btn btn-view">
+                                                <i class="mdi mdi-eye"></i> مشاهدة
+                                            </a>
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="5">
+                                            <div class="empty-state">
+                                                <i class="mdi mdi-clock-outline"></i>
+                                                <p class="mb-0">لا يوجد طلبات في قائمة الانتظار</p>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                @if($wating_list->hasPages())
+                    <div class="card-footer bg-white border-top-0">
+                        {{ $wating_list->withQueryString()->links() }}
+                    </div>
+                @endif
+            </div>
         </div>
     </div>
-
 @endsection
-@push('scripts')
-
-    <script>
-        $(document).ready(function () {
-            $('#datatable').DataTable({
-                paging: false, // Disable DataTables pagination
-                searching: true, // Enable searching
-                ordering: true, // Enable column ordering
-                info: false, // Disable DataTables' "Showing X to Y of Z entries"
-                order: [[0, 'desc']], // Order by the first column (created_at) in descending order
-                columnDefs: [
-                    {
-                        targets: 0, // The column index for "created_at"
-                        type: 'date' // Ensure it recognizes the date format for proper sorting
-                    }
-                ]
-            });
-        });
-    </script>
-
-    <!-- Buttons examples -->
-    <script src="{{ asset('assets/libs/datatables.net-buttons/js/dataTables.buttons.min.js') }}"></script>
-    <script src="{{ asset('assets/libs/datatables.net-buttons-bs4/js/buttons.bootstrap4.min.js') }}"></script>
-    <script src="{{ asset('assets/libs/jszip/jszip.min.js') }}"></script>
-    <script src="{{ asset('assets/libs/pdfmake/build/pdfmake.min.js') }}"></script>
-    <script src="{{ asset('assets/libs/pdfmake/build/vfs_fonts.js') }}"></script>
-    <script src="{{ asset('assets/libs/datatables.net-buttons/js/buttons.html5.min.js') }}"></script>
-    <script src="{{ asset('assets/libs/datatables.net-buttons/js/buttons.print.min.js') }}"></script>
-    <script src="{{ asset('assets/libs/datatables.net-buttons/js/buttons.colVis.min.js') }}"></script>
-    <!-- Bootstrap datatable js -->
-    <script src="{{ asset('assets/libs/datatables.net/js/jquery.dataTables.min.js') }}"></script>
-    <script src="{{ asset('assets/libs/datatables.net-bs4/js/dataTables.bootstrap4.min.js') }}"></script>
-    <!-- Datatable init js -->
-    <script src="{{ asset('assets/js/pages/datatables.init.js') }}"></script>
-@endpush

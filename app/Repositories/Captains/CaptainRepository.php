@@ -21,7 +21,7 @@ class CaptainRepository implements CaptainInterface
 
     public function getMainCaptain()
     {
-        return $this->captain::paginate();
+        return $this->captain::paginate(1);
     }
 
     public function updatePassword($data, $id)
