@@ -20,7 +20,7 @@ class CarRepository implements CarInterface
 
     public function getMain()
     {
-        return $this->car->paginate();
+        return $this->car->paginate(15);
     }
 
     public function store($data)
