@@ -25,10 +25,24 @@ class ClientsController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
         Gate::authorize('client.view');
-        $clients = $this->clientRepo->getMainClient();
+        
+        // Enhanced search functionality
+        if ($request->filled('phone')) {
+            $search = $request->phone;
+            $clients = User::where(function($query) use ($search) {
+                $query->where('phone_number', 'like', "%{$search}%")
+                      ->orWhere('phone', 'like', "%{$search}%")
+                      ->orWhere('first_name', 'like', "%{$search}%")
+                      ->orWhere('family_name', 'like', "%{$search}%")
+                      ->orWhereRaw("CONCAT(first_name, ' ', family_name) LIKE ?", ["%{$search}%"]);
+            })->latest()->paginate(15);
+        } else {
+            $clients = $this->clientRepo->getMainClient();
+        }
+        
         return view('dashboard.clients.index', compact('clients'));
     }
 
