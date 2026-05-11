@@ -15,9 +15,28 @@ use Illuminate\Support\Facades\Http;
 class PaymentController extends Controller
 {
 
-    public function index()
+    public function index(Request $request)
     {
-        $payments = Payment::latest()->paginate();
+        $query = Payment::query()->latest();
+
+        // Search functionality
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('order_number', 'like', "%{$search}%")
+                  ->orWhere('payment_id', 'like', "%{$search}%")
+                  ->orWhere('user_name', 'like', "%{$search}%")
+                  ->orWhere('package_reference', 'like', "%{$search}%");
+            });
+        }
+
+        // Status filter
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        $payments = $query->paginate(15);
+        
         return view('dashboard.payments.payments', compact('payments'));
     }
 

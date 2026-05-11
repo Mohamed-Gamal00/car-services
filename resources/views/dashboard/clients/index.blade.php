@@ -16,8 +16,8 @@
                     <x-alert type='dark'/>
                     <x-alert type='danger'/>
                     <form action="{{ URL::current() }}" method="get" class="d-flex justify-content-between mb-4">
-                        <x-form.input name="phone_number" placeholder="بحث برقم الجوال" class="mx-2"
-                                      :value="request('phone_number')"/>
+                        <x-form.input name="phone" placeholder="بحث برقم الجوال" class="mx-2"
+                                      :value="request('phone')"/>
 
                         <button class="btn btn-dark">بحث</button>
                     </form>
@@ -45,9 +45,9 @@
                             @forelse ($clients as $client)
                                 <tr data-id="5">
 
-                                    <td data-field="name">{{ $client->first_name . ' ' . $client->family_name }}</td>
+                                    <td data-field="name">{{ $client->name }}</td>
                                     <td data-field="phone_number">
-                                        {{$client->phone_number }}
+                                        {{$client->phone }}
                                     </td>
                                     {{--                                    <td data-field="email">{{ $client->email }}</td>--}}
                                     <td data-field="gender">{{ $client->created_at->format('Y-m-d H:i') }}</td>
