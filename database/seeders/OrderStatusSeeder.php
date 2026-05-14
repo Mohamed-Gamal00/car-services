@@ -29,34 +29,16 @@ class OrderStatusSeeder extends Seeder
                 'sort_order' => 3,
             ],
             [
-                'name' => 'في الطريق',
-                'name_en' => 'On the way',
-                'color' => '#fd7e14',
-                'sort_order' => 4,
-            ],
-            [
-                'name' => 'وصل الكابتن',
-                'name_en' => 'Captain arrived',
-                'color' => '#6f42c1',
-                'sort_order' => 5,
-            ],
-            [
-                'name' => 'جاري العمل',
-                'name_en' => 'In progress',
-                'color' => '#20c997',
-                'sort_order' => 6,
-            ],
-            [
                 'name' => 'مكتمل',
                 'name_en' => 'Completed',
                 'color' => '#28a745',
-                'sort_order' => 7,
+                'sort_order' => 4,
             ],
             [
                 'name' => 'ملغي',
                 'name_en' => 'Cancelled',
                 'color' => '#dc3545',
-                'sort_order' => 8,
+                'sort_order' => 5,
             ],
         ];
 

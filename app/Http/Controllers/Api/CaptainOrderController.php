@@ -140,7 +140,6 @@ class CaptainOrderController extends Controller
     public function completeOrder(Request $request, $order_id)
     {
         $captain = $request->user(); // Assuming captain is authenticated
-
         // Find the order assigned to this captain and ensure it exists
         $order = Order::where('id', $order_id)
             ->where('captain_id', $captain->id)
@@ -157,9 +156,10 @@ class CaptainOrderController extends Controller
         $order->update(['order_status_id' => 4]);
 
         // Notify admins about the completed order
-//        $admins = Admin::all();
-        $admins = Admin::whereNotIn('id', [13, 14, 15])->get();
+    //    $admins = Admin::all();
+        $admins = Admin::where('is_super_admin', 1)->get();
         Notification::send($admins, new CompleteOrder($order));
+        // dd( $admins);
 
         $validAdmins = $admins->filter(function ($admin) {
             return filter_var($admin->email, FILTER_VALIDATE_EMAIL);
