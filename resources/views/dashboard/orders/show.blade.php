@@ -449,6 +449,11 @@
                         <i class="mdi mdi-help-circle"></i> غير محدد
                     </span>
                 @endif
+                
+                {{-- Generate Device Token Button --}}
+                <button id="generateTokenBtn" class="badge" style="background: rgba(59, 130, 246, 0.9); cursor: pointer; border: none; transition: all 0.3s;">
+                    <i class="mdi mdi-bell-ring"></i> <span id="tokenBtnText">تفعيل الإشعارات</span>
+                </button>
             </div>
             <div class="customer-info">
                 <div class="customer-avatar">
@@ -990,48 +995,171 @@
         firebase.initializeApp(firebaseConfig);
         const messaging = firebase.messaging();
 
+        // Save token to backend
+        function saveTokenToBackend(token) {
+            $.ajaxSetup({
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                }
+            });
+
+            $.ajax({
+                url: '{{ route("device-tokens.store") }}',
+                type: 'POST',
+                data: {
+                    token: token,
+                    device_type: 'web'
+                },
+                dataType: 'JSON',
+                success: function (response) {
+                    console.log('✅ Token saved successfully:', response);
+                    
+                    // Save status to localStorage
+                    localStorage.setItem('firebase_token_status', 'active');
+                    
+                    // Update button UI
+                    $('#tokenBtnText').text('الإشعارات مفعلة');
+                    $('#generateTokenBtn').css('background', 'rgba(16, 185, 129, 0.9)');
+                    
+                    // Show success notification
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'تم بنجاح',
+                            text: 'تم تفعيل الإشعارات بنجاح',
+                            timer: 2000,
+                            showConfirmButton: false
+                        });
+                    } else {
+                        alert('تم تفعيل الإشعارات بنجاح');
+                    }
+                },
+                error: function (err) {
+                    console.error('❌ Error saving token:', err);
+                    
+                    // Update button UI
+                    $('#tokenBtnText').text('فشل التفعيل');
+                    $('#generateTokenBtn').css('background', 'rgba(239, 68, 68, 0.9)');
+                    
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'خطأ',
+                            text: 'فشل حفظ رمز الإشعارات',
+                            timer: 2000
+                        });
+                    } else {
+                        alert('فشل حفظ رمز الإشعارات');
+                    }
+                }
+            });
+        }
+
+        // Initialize Firebase Messaging Registration (Auto)
         function initFirebaseMessagingRegistration() {
             messaging
                 .requestPermission()
                 .then(function () {
-                    return messaging.getToken()
+                    console.log('✅ Notification permission granted');
+                    return messaging.getToken();
                 })
                 .then(function (token) {
-                    console.log(token);
-
-                    $.ajaxSetup({
-                        headers: {
-                            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                        }
-                    });
-
-                    $.ajax({
-                        url: '{{ route("save-token") }}',
-                        type: 'POST',
-                        data: {
-                            token: token
-                        },
-                        dataType: 'JSON',
-                        success: function (response) {
-                            console.log('Token saved successfully.');
-                        },
-                        error: function (err) {
-                            console.log('User Chat Token Error' + err);
-                        },
-                    });
-
-                }).catch(function (err) {
-                console.log('User Chat Token Error' + err);
-            });
+                    console.log('🔑 Firebase Token:', token);
+                    saveTokenToBackend(token);
+                })
+                .catch(function (err) {
+                    console.error('❌ Firebase permission error:', err);
+                    $('#tokenBtnText').text('تم الرفض');
+                    $('#generateTokenBtn').css('background', 'rgba(239, 68, 68, 0.9)');
+                });
         }
 
+        // Manual Token Generation (Button Click)
+        function generateDeviceToken() {
+            const btn = $('#generateTokenBtn');
+            const btnText = $('#tokenBtnText');
+            
+            // Update button to loading state
+            btnText.text('جاري التفعيل...');
+            btn.css('background', 'rgba(251, 191, 36, 0.9)');
+            btn.prop('disabled', true);
+            
+            messaging
+                .requestPermission()
+                .then(function () {
+                    console.log('✅ Notification permission granted');
+                    return messaging.getToken();
+                })
+                .then(function (token) {
+                    console.log('🔑 Firebase Token Generated:', token);
+                    console.log('📋 Token copied to console for testing');
+                    
+                    // Save to backend
+                    saveTokenToBackend(token);
+                    
+                    // Re-enable button
+                    btn.prop('disabled', false);
+                })
+                .catch(function (err) {
+                    console.error('❌ Error generating token:', err);
+                    
+                    // Reset button
+                    btnText.text('فشل التفعيل');
+                    btn.css('background', 'rgba(239, 68, 68, 0.9)');
+                    btn.prop('disabled', false);
+                    
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'خطأ',
+                            text: 'يرجى السماح بالإشعارات من إعدادات المتصفح',
+                            confirmButtonText: 'حسناً'
+                        });
+                    } else {
+                        alert('يرجى السماح بالإشعارات من إعدادات المتصفح');
+                    }
+                });
+        }
+
+        // Handle foreground messages
         messaging.onMessage(function (payload) {
+            console.log('📬 Message received:', payload);
+            
             const noteTitle = payload.notification.title;
             const noteOptions = {
                 body: payload.notification.body,
-                icon: payload.notification.icon,
+                icon: payload.notification.icon || '/favicon.ico',
             };
+            
+            // Show browser notification
             new Notification(noteTitle, noteOptions);
+            
+            // Show in-page notification if SweetAlert is available
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    icon: 'info',
+                    title: noteTitle,
+                    text: payload.notification.body,
+                    timer: 5000,
+                    showConfirmButton: true
+                });
+            }
+        });
+
+        // Check if token already exists on page load
+        $(document).ready(function() {
+            // Check localStorage for token status
+            const tokenStatus = localStorage.getItem('firebase_token_status');
+            
+            if (tokenStatus === 'active') {
+                $('#tokenBtnText').text('الإشعارات مفعلة');
+                $('#generateTokenBtn').css('background', 'rgba(16, 185, 129, 0.9)');
+            }
+            
+            // Bind click event to generate token button
+            $('#generateTokenBtn').on('click', function() {
+                generateDeviceToken();
+            });
         });
     </script>
 @endsection

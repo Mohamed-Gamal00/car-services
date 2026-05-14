@@ -91,13 +91,13 @@ class OrderController extends Controller
                 $deviceTokens = $captain->devicetokens()->pluck('token');
                 app()->setLocale($captain->lang ?? 'ar');
 
-                // $title = __('general.new_notification');
-                // $body = __('general.There_is_a_new_request_for_you');
-                // $tokens = $deviceTokens;
-                // $data = [
-                //     'order_id' => 'order',
-                // ];
-                // $this->notifyByFirebase($title, $body, $tokens, $data);
+                 $title = __('general.new_notification');
+                 $body = __('general.There_is_a_new_request_for_you');
+                 $tokens = $deviceTokens;
+                 $data = [
+                     'order_id' => 'order',
+                ];
+                 $this->notifyByFirebase($title, $body, $tokens, $data);
 
 
                 $userpackage = UserPackage::with('package')->find($order->user_package_id);

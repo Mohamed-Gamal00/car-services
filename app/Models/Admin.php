@@ -78,4 +78,12 @@ class Admin extends Authenticatable
         // TODO: Implement proper role-based permissions
         return true;
     }
+
+    /**
+     * Get device tokens for push notifications
+     */
+    public function deviceTokens()
+    {
+        return $this->morphMany(DeviceToken::class, 'tokenable');
+    }
 }

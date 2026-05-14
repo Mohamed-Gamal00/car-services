@@ -12,10 +12,14 @@ class PushNotificationController extends Controller
 {
     public function create()
     {
-        return view('dashboard.settings.web_notification');
+        $admins = \App\Models\Admin::select('id', 'name', 'email')->get();
+        return view('dashboard.settings.web_notification', compact('admins'));
     }
 
-    public function store(Request $request)
+    /**
+     * Send test notification to current admin
+     */
+    public function sendToMe(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'title' => 'required',
@@ -26,32 +30,185 @@ class PushNotificationController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return redirect()->back()->withErrors($validator)->withInputs($request->all());
+            return response()->json([
+                'success' => false,
+                'message' => 'بيانات غير صحيحة',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $admin = auth()->guard('admin')->user();
+
+        if (!$admin) {
+            return response()->json([
+                'success' => false,
+                'message' => 'غير مصرح'
+            ], 401);
         }
 
         // Get Firebase credentials and access token
         $credentialsFilePath = public_path('json/test-notification-3f882-dedabd83f76e.json');
         if (!file_exists($credentialsFilePath)) {
-            return response()->json(['error' => 'Firebase credentials file not found'], 404);
+            return response()->json([
+                'success' => false,
+                'message' => 'ملف بيانات Firebase غير موجود'
+            ], 404);
         }
 
         $credentials = json_decode(file_get_contents($credentialsFilePath), true);
         $accessToken = $this->generateAccessToken($credentials);
 
         if (!$accessToken) {
-            return response()->json(['error' => 'Failed to retrieve access token'], 500);
+            return response()->json([
+                'success' => false,
+                'message' => 'فشل في الحصول على رمز الوصول'
+            ], 500);
         }
 
-        // Send notification to topic "general"
-        $topic = 'general';
+        $projectId = $credentials['project_id'];
+        $result = $this->sendToAdmin($admin->id, $request->title, $request->description, $accessToken, $projectId);
+
+        return response()->json($result);
+    }
+
+    public function store(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'title' => 'required',
+            'description' => 'required',
+            'target_type' => 'nullable|in:topic,admin,all_admins',
+            'admin_id' => 'nullable|required_if:target_type,admin|exists:admins,id',
+        ], [
+            'title.required' => 'ادخل العنوان',
+            'description.required' => 'ادخل المحتوي',
+            'admin_id.required_if' => 'يرجى اختيار المسؤول',
+            'admin_id.exists' => 'المسؤول غير موجود',
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInputs($request->all());
+        }
+
+        // Get Firebase credentials and access token
+        $credentialsFilePath = public_path('json/test-notification-3f882-dedabd83f76e.json');
+        if (!file_exists($credentialsFilePath)) {
+            return redirect()->back()->with(['error' => 'ملف بيانات Firebase غير موجود']);
+        }
+
+        $credentials = json_decode(file_get_contents($credentialsFilePath), true);
+        $accessToken = $this->generateAccessToken($credentials);
+
+        if (!$accessToken) {
+            return redirect()->back()->with(['error' => 'فشل في الحصول على رمز الوصول']);
+        }
+
+        $targetType = $request->target_type ?? 'topic';
         $projectId = $credentials['project_id'];
 
+        try {
+            if ($targetType === 'admin') {
+                // Send to specific admin
+                $result = $this->sendToAdmin($request->admin_id, $request->title, $request->description, $accessToken, $projectId);
+            } elseif ($targetType === 'all_admins') {
+                // Send to all admins
+                $result = $this->sendToAllAdmins($request->title, $request->description, $accessToken, $projectId);
+            } else {
+                // Send to topic (default behavior)
+                $result = $this->sendToTopic('general', $request->title, $request->description, $accessToken, $projectId);
+            }
+
+            if ($result['success']) {
+                return redirect()->back()->with(['success' => $result['message']]);
+            } else {
+                return redirect()->back()->with(['error' => $result['message']]);
+            }
+        } catch (\Exception $e) {
+            \Log::error('Push notification error: ' . $e->getMessage());
+            return redirect()->back()->with(['error' => 'حدث خطأ أثناء إرسال الإشعار']);
+        }
+    }
+
+    /**
+     * Send notification to a specific admin's devices
+     */
+    private function sendToAdmin($adminId, $title, $body, $accessToken, $projectId)
+    {
+        $admin = \App\Models\Admin::find($adminId);
+        
+        if (!$admin) {
+            return ['success' => false, 'message' => 'المسؤول غير موجود'];
+        }
+
+        $tokens = $admin->deviceTokens()->pluck('token')->toArray();
+
+        if (empty($tokens)) {
+            return ['success' => false, 'message' => 'لا توجد أجهزة مسجلة لهذا المسؤول'];
+        }
+
+        $successCount = 0;
+        $failCount = 0;
+
+        foreach ($tokens as $token) {
+            $result = $this->sendToToken($token, $title, $body, $accessToken, $projectId);
+            if ($result) {
+                $successCount++;
+            } else {
+                $failCount++;
+            }
+        }
+
+        $message = "تم إرسال الإشعار إلى {$successCount} جهاز";
+        if ($failCount > 0) {
+            $message .= " (فشل {$failCount})";
+        }
+
+        return ['success' => true, 'message' => $message];
+    }
+
+    /**
+     * Send notification to all admins
+     */
+    private function sendToAllAdmins($title, $body, $accessToken, $projectId)
+    {
+        $tokens = DeviceToken::where('tokenable_type', \App\Models\Admin::class)
+            ->pluck('token')
+            ->toArray();
+
+        if (empty($tokens)) {
+            return ['success' => false, 'message' => 'لا توجد أجهزة مسجلة'];
+        }
+
+        $successCount = 0;
+        $failCount = 0;
+
+        foreach ($tokens as $token) {
+            $result = $this->sendToToken($token, $title, $body, $accessToken, $projectId);
+            if ($result) {
+                $successCount++;
+            } else {
+                $failCount++;
+            }
+        }
+
+        $message = "تم إرسال الإشعار إلى {$successCount} جهاز";
+        if ($failCount > 0) {
+            $message .= " (فشل {$failCount})";
+        }
+
+        return ['success' => true, 'message' => $message];
+    }
+
+    /**
+     * Send notification to a topic
+     */
+    private function sendToTopic($topic, $title, $body, $accessToken, $projectId)
+    {
         $notification = [
             "message" => [
                 "topic" => $topic,
                 "notification" => [
-                    "title" => $request->title,
-                    "body" => $request->description,
+                    "title" => $title,
+                    "body" => $body,
                 ],
                 "data" => [
                     "click_action" => "FLUTTER_NOTIFICATION_CLICK",
@@ -59,6 +216,47 @@ class PushNotificationController extends Controller
             ]
         ];
 
+        $result = $this->sendFCMRequest($notification, $accessToken, $projectId);
+        
+        if ($result) {
+            return ['success' => true, 'message' => 'تم إرسال الإشعار بنجاح'];
+        } else {
+            return ['success' => false, 'message' => 'فشل إرسال الإشعار'];
+        }
+    }
+
+    /**
+     * Send notification to a specific device token
+     */
+    private function sendToToken($token, $title, $body, $accessToken, $projectId)
+    {
+        $notification = [
+            "message" => [
+                "token" => $token,
+                "notification" => [
+                    "title" => $title,
+                    "body" => $body,
+                ],
+                "webpush" => [
+                    "notification" => [
+                        "icon" => asset('favicon.ico'),
+                        "badge" => asset('favicon.ico'),
+                    ],
+                    "fcm_options" => [
+                        "link" => url('/dashboard')
+                    ]
+                ]
+            ]
+        ];
+
+        return $this->sendFCMRequest($notification, $accessToken, $projectId);
+    }
+
+    /**
+     * Send FCM request
+     */
+    private function sendFCMRequest($notification, $accessToken, $projectId)
+    {
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, "https://fcm.googleapis.com/v1/projects/{$projectId}/messages:send");
         curl_setopt($ch, CURLOPT_POST, true);
@@ -70,9 +268,19 @@ class PushNotificationController extends Controller
         ]);
 
         $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         curl_close($ch);
 
-        return redirect()->back()->with(['success' => 'تم إرسال الإشعار بنجاح']);
+        if ($httpCode === 200) {
+            \Log::info('FCM notification sent successfully', ['response' => $response]);
+            return true;
+        } else {
+            \Log::error('FCM notification failed', [
+                'http_code' => $httpCode,
+                'response' => $response
+            ]);
+            return false;
+        }
     }
 
     private function generateAccessToken($credentials)

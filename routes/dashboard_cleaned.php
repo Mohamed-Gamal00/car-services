@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Dashboard\ContactUsController;
+use App\Http\Controllers\Dashboard\DeviceTokenController;
 use App\Http\Controllers\Dashboard\DiscountCodeController;
 use App\Http\Controllers\Dashboard\NotificationsController;
 use App\Http\Controllers\Dashboard\OrderStatusController;
@@ -91,8 +92,16 @@ Route::group(['prefix' => 'dashboard', 'middleware' => 'admin'], function () {
     Route::delete('/orders/{id}/delete', [OrderController::class, 'destroy'])->name('orders.destroy');
     Route::post('/orders/{id}/regenerate-invoice', [OrderController::class, 'regenerateInvoice'])->name('orders.regenerate-invoice');
     
-    // Firebase token for notifications
-    Route::post('/save-token', [OrderController::class, 'saveToken'])->name('save-token');
+    // Device Token Routes for Push Notifications
+    Route::prefix('device-tokens')->name('device-tokens.')->group(function () {
+        Route::post('/', [DeviceTokenController::class, 'store'])->name('store');
+        Route::get('/', [DeviceTokenController::class, 'index'])->name('index');
+        Route::delete('/{id}', [DeviceTokenController::class, 'destroy'])->name('destroy');
+        Route::delete('/', [DeviceTokenController::class, 'destroyAll'])->name('destroy-all');
+    });
+    
+    // Legacy route for backward compatibility
+    Route::post('/save-token', [DeviceTokenController::class, 'store'])->name('save-token');
 
     //-----------------------------------------------------------------------------/ Order Statuses
     Route::get('/order_status/arranging', [OrderStatusController::class, 'orderArrangement'])->name('order_status.arranging');
@@ -148,6 +157,7 @@ Route::group(['prefix' => 'dashboard', 'middleware' => 'admin'], function () {
     //-----------------------------------------------------------------------------/ Push Notifications
     Route::get('/push_notification', [PushNotificationController::class, 'create'])->name('notification.Dashboard.create');
     Route::post('/send-notification', [PushNotificationController::class, 'store'])->name('notification.Dashboard.store');
+    Route::post('/send-notification-to-me', [PushNotificationController::class, 'sendToMe'])->name('notification.Dashboard.sendToMe');
 
     //-----------------------------------------------------------------------------/ Reports & Analytics
     Route::get('/reports', [ReportsController::class, 'index'])->name('reports.index');
