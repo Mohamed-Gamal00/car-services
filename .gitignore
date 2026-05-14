@@ -17,5 +17,10 @@ yarn-error.log
 /.fleet
 /.idea
 /.vscode
+
+# Firebase credentials
 public/json/
-test-notification-3f882-dedabd83f76e.json
+app/json/
+**/test-notification-*.json
+**/*firebase*.json
+!firebase.json
