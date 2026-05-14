@@ -68,7 +68,7 @@ class CaptainController extends Controller
         Gate::authorize('captain.show');
         $captain = Captain::findOrFail($id);
         $completed_orders = Order::latest()
-            ->with('products', 'orderStatus', 'choices')
+            ->with('service', 'orderStatus', 'choices')
             ->where('captain_id', $captain->id)
             ->where('order_status_id', 4)
             ->paginate(10);
